@@ -269,6 +269,10 @@
                             </div>
                             <div class="col-12 text-end" >
 
+                                <input type="checkbox" class="model-checkbox" onclick="updateSelectedCount()" data-file-id="{{ file.id }}"
+                                    style="margin-right: 5px; transform: scale(1.5); vertical-align: middle;">
+
+
                                 <button onclick="viewFile('{{ file.id }}')" class="btn btn-outline-secondary btn-sm" style="border-radius: 5px;">
                                     <i data-feather="eye"></i> View
                                 </button>
