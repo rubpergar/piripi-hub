@@ -33,6 +33,8 @@ chico sundermann">
 
     <link rel="stylesheet" href="{{ url_for("static", filename="css/own.css") }}">
 
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/style.css") }}">
+
 </head>
 
 <body>
@@ -162,6 +164,11 @@ chico sundermann">
             <div class="navbar-collapse collapse">
                 <ul class="navbar-nav navbar-align">
                     <li class="nav-item dropdown">
+
+                        <a href="/dataset/download/all" class="download-button">
+                            <i data-feather="download"></i>
+                            Download all datasets
+                        </a>
 
                         {% if current_user.is_anonymous %}
                             <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.login') }}">Login</a>
