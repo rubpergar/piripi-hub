@@ -4,6 +4,8 @@ import hashlib
 import shutil
 from typing import Optional
 import uuid
+import tempfile
+from zipfile import ZipFile
 
 from flask import request
 
@@ -62,6 +64,9 @@ class DataSetService(BaseService):
             uvl_filename = feature_model.fm_meta_data.uvl_filename
             shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
 
+    def is_synchronized(self, dataset_id: int) -> bool:
+        return self.repository.is_synchronized(dataset_id)
+    
     def get_synchronized(self, current_user_id: int) -> DataSet:
         return self.repository.get_synchronized(current_user_id)
 
@@ -139,6 +144,34 @@ class DataSetService(BaseService):
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
         domain = os.getenv('DOMAIN', 'localhost')
         return f'http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}'
+    
+    def zip_all_datasets(self) -> str:
+        temp_dir = tempfile.mkdtemp() #Crea una carpeta temporal para almacenar el archivo  .zip
+        zip_path = os.path.join(temp_dir, "all_datasets.zip") #Especificamos donde vamos a guardar el zip (en la carpeta temporal creada anteriormente)
+
+        with ZipFile(zip_path, "w") as zipf: #Abrimos el archivo en modo escritura (w)
+            for user_dir in os.listdir("uploads"): #para cada usuario verificamos que
+                user_path = os.path.join("uploads", user_dir)
+
+                if os.path.isdir(user_path) and user_dir.startswith("user_"): #existe ese directorio y empiece por "user_" lo cual identifica que pertenece a un usuario
+                    for dataset_dir in os.listdir(user_path): #Por cada directorio de usuario 
+                        dataset_path = os.path.join(user_path, dataset_dir)
+
+                        if os.path.isdir(dataset_path) and dataset_dir.startswith("dataset_"): #Verificamos que existan directorios que empiecen por "dataset_" lo cual identifica q
+                            dataset_id = int(dataset_dir.split("_")[1])
+
+                            if self.is_synchronized(dataset_id):
+                                for subdir, dirs, files in os.walk(dataset_path):
+                                    for file in files:
+                                        full_path = os.path.join(subdir, file)
+
+                                        relative_path = os.path.relpath(full_path, dataset_path)
+                                        zipf.write(
+                                            full_path,
+                                            arcname=os.path.join(dataset_dir, relative_path),
+                                        )
+        return zip_path
+
 
 
 class AuthorService(BaseService):
