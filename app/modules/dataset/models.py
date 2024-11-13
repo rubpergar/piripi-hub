@@ -164,3 +164,23 @@ class DOIMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     dataset_doi_old = db.Column(db.String(120))
     dataset_doi_new = db.Column(db.String(120))
+
+
+class RateDatasets(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    rate = db.Column(db.Integer)
+    comment = db.Column(db.String(256))
+    dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    data_set = db.relationship('DataSet', backref='rate_data_sets', uselist=False, cascade="all, delete")
+    user = db.relationship('User', backref='rate_data_sets', uselist=False, cascade="all, delete")
+
+    def __rep__(self):
+        return (
+                f'RateDatasets<'
+                f'{self.id}, Rate={self.rate}, '
+                f'Comment={self.comment}, '
+                f'Dataset={self.data_set.tittle}, '
+                f'Author={self.user.username}>'
+                )

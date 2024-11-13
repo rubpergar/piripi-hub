@@ -20,6 +20,7 @@ from flask import (
 from flask_login import login_required, current_user
 
 from app.modules.dataset.forms import DataSetForm
+from app.modules.dataset.forms import RateForm
 from app.modules.dataset.models import (
     DSDownloadRecord
 )
@@ -30,7 +31,8 @@ from app.modules.dataset.services import (
     DSMetaDataService,
     DSViewRecordService,
     DataSetService,
-    DOIMappingService
+    DOIMappingService,
+    RateDataSetService
 )
 from app.modules.zenodo.services import ZenodoService
 
@@ -43,6 +45,7 @@ dsmetadata_service = DSMetaDataService()
 zenodo_service = ZenodoService()
 doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
+rateDataset_service = RateDataSetService()
 
 
 @dataset_bp.route("/dataset/upload", methods=["GET", "POST"])
@@ -278,3 +281,39 @@ def get_unsynchronized_dataset(dataset_id):
         abort(404)
 
     return render_template("dataset/view_dataset.html", dataset=dataset)
+
+
+@dataset_bp.route("/rate/<int:dataset_id>", methods=["GET"], endpoint="rate")
+@login_required
+def viewRates(dataset_id):
+    form = RateForm()
+    ratedata = rateDataset_service.get_all_comments(dataset_id)
+    return render_template('rate/index.html', rate_data_sets=ratedata, form=form, dataset=dataset_id)
+
+
+'''
+CREATE
+'''
+
+
+@dataset_bp.route('/ratedataset/create/<int:dataset_id>', methods=['GET', 'POST'], endpoint="create_ratedataset")
+@login_required
+def create_rate(dataset_id):
+    form = RateForm()
+    if form.validate_on_submit():
+        result = rateDataset_service.create(
+            rate=form.rate.data,
+            comment=form.comment.data,
+            user_id=current_user.id,
+            dataset_id=dataset_id
+        )
+        return rateDataset_service.handle_service_response2(
+            result=result,
+            errors=form.errors,
+            success_url_redirect='dataset.rate',
+            success_msg='Rate successfully published!',
+            error_template='rate/create.html',
+            form=form,
+            id=dataset_id
+        )
+    return render_template('rate/create.html', form=form, dataset=dataset_id)

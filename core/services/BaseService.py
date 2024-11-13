@@ -32,3 +32,14 @@ class BaseService:
                 for error_message in error_messages:
                     flash(f'{error_field}: {error_message}', 'error')
             return render_template(error_template, form=form)
+    
+    def handle_service_response2(self, result, errors, success_url_redirect, success_msg, error_template, form, id):
+        if result:
+            flash(success_msg, 'success')
+        # Usa el dataset_id con url_for
+            return redirect(url_for(success_url_redirect, dataset_id=id))
+        else:
+            for error_field, error_messages in errors.items():
+                for error_message in error_messages:
+                    flash(f'{error_field}: {error_message}', 'error')
+        return render_template(error_template, form=form)

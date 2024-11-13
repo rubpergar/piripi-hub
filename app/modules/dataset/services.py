@@ -15,7 +15,8 @@ from app.modules.dataset.repositories import (
     DSDownloadRecordRepository,
     DSMetaDataRepository,
     DSViewRecordRepository,
-    DataSetRepository
+    DataSetRepository,
+    RateRepository
 )
 from app.modules.featuremodel.repositories import FMMetaDataRepository, FeatureModelRepository
 from app.modules.hubfile.repositories import (
@@ -212,3 +213,11 @@ class SizeService():
             return f'{round(size / (1024 ** 2), 2)} MB'
         else:
             return f'{round(size / (1024 ** 3), 2)} GB'
+
+
+class RateDataSetService(BaseService):
+    def __init__(self):
+        self.repository = RateRepository()
+
+    def get_all_comments(self, dataset_id):
+        return self.repository.get_all_comments(dataset_id)
