@@ -6,6 +6,11 @@ import tempfile
 import uuid
 from datetime import datetime, timezone
 from zipfile import ZipFile
+from flask import Response, abort
+from flask import render_template, request, send_file
+from flask_login import login_required, current_user
+from app import db
+from app.modules.dataset.models import DataSet
 
 from flask import (
     redirect,
@@ -174,6 +179,18 @@ def delete():
         return jsonify({"message": "File deleted successfully"})
 
     return jsonify({"error": "Error: File not found"})
+
+
+@dataset_bp.route("/dataset/download/all", methods=["GET"])
+def download_all_dataset():
+    zip_path = dataset_service.zip_all_datasets()
+
+    # Asigna el nombre al zip
+    zip_filename = f"all_datasets.zip"
+
+    return send_file(zip_path, as_attachment=True, download_name=zip_filename)
+
+
 
 
 @dataset_bp.route("/dataset/download/<int:dataset_id>", methods=["GET"])

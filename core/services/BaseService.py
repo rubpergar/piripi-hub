@@ -16,6 +16,9 @@ class BaseService:
 
     def get_or_404(self, id):
         return self.repository.get_or_404(id)
+    
+    def get_all(self):
+        return self.repository.get_all()
 
     def update(self, id, **kwargs):
         return self.repository.update(id, **kwargs)
