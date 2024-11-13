@@ -21,7 +21,10 @@ function send_query() {
                 query: document.querySelector('#query').value,
                 publication_type: document.querySelector('#publication_type').value,
                 sorting: document.querySelector('[name="sorting"]:checked').value,
-            };
+                number_of_features: document.querySelector('#number_of_features').value,
+                number_of_models: document.querySelector('#number_of_models').value, 
+
+            };            
 
             console.log(document.querySelector('#publication_type').value);
 
@@ -166,6 +169,12 @@ function clearFilters() {
     let queryInput = document.querySelector('#query');
     queryInput.value = "";
     // queryInput.dispatchEvent(new Event('input', {bubbles: true}));
+
+    let numberOfFeaturesInput = document.querySelector('#number_of_features');
+    numberOfFeaturesInput.value = "";
+
+    let numberOfModelsInput = document.querySelector('#number_of_models');
+    numberOfModelsInput.value = "";
 
     // Reset the publication type to its default value
     let publicationTypeSelect = document.querySelector('#publication_type');
