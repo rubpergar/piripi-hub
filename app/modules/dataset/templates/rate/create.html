@@ -1,0 +1,23 @@
+{% extends "base_template.html" %}
+
+{% block title %}Create notepad{% endblock %}
+
+{% block content %}
+
+<form method="POST" action="{{ url_for('dataset.create_ratedataset', dataset_id=dataset) }}">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.rate.label }}<br>
+        {{ form.rate(size=32) }}
+    </div>
+    <div>
+        {{ form.comment.label }}<br>
+        {{ form.comment(rows=5) }}
+    </div>
+    <div>
+        {{ form.submit() }}
+    </div>
+</form>
+
+
+{% endblock %}
