@@ -16,3 +16,11 @@ Repository of feature models in UVL format integrated with Zenodo and flamapy fo
 ## Official documentation
 
 You can consult the official documentation of the project at [docs.uvlhub.io](https://docs.uvlhub.io/)
+
+## Instalación de hooks de Git
+
+Para asegurarte de que los hooks de Git estén configurados correctamente, ejecuta el siguiente comando después de clonar el repositorio:
+
+```bash
+ls -ld .git/hooks/
+./scripts/git-hooks/install-hooks.sh
