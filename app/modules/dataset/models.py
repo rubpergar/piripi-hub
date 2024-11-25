@@ -173,8 +173,8 @@ class RateDatasets(db.Model):
     dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    data_set = db.relationship('DataSet', backref='rate_data_sets', uselist=False, cascade="all, delete")
-    user = db.relationship('User', backref='rate_data_sets', uselist=False, cascade="all, delete")
+    data_set = db.relationship('DataSet', backref='rate_data_sets', lazy=True)
+    user = db.relationship('User', backref='rate_data_sets', lazy=True)
 
     def __rep__(self):
         return (

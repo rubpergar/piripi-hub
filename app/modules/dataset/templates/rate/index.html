@@ -1,21 +1,43 @@
 {% extends "base_template.html" %}
 
-{% block title %}View rates{% endblock %}
+{% block title %}View Rates{% endblock %}
 
 {% block content %}
-
-{% if rate_data_sets %}
-    <a href="{{ url_for('dataset.create_ratedataset', dataset_id=dataset) }}">Create New Rate</a>
-    <ul>
-    {% for ratedataset in rate_data_sets %}
-        <li>
-            <strong><a>{{ ratedataset.rate }}</a></strong> - {{ ratedataset.comment }} - {{ratedataset.user.email}}
-        </li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No rates for this dataset.</p>
-    <a href="{{ url_for('dataset.create_ratedataset', dataset_id=dataset) }}">Sé el primero</a>
-{% endif %}
-
+<div class="container mt-5">
+    {% if rate_data_sets %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Rates for Dataset</h2>
+            <a href="{{ url_for('dataset.create_ratedataset', dataset_id=dataset) }}" class="btn btn-primary">Create New Rate</a>
+        </div>
+        <ul class="list-group">
+            {% for ratedataset in rate_data_sets %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>{{ ratedataset.rate }}⭐</strong> - {{ ratedataset.comment }}
+                            <small class="text-muted d-block">By: {{ ratedataset.user.email }}</small>
+                        </div>
+                        {% if ratedataset.user_id == current_user.id %}
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('dataset.edit_ratedataset', dataset_id=dataset, rate_id=ratedataset.id) }}" 
+                                   class="btn btn-sm btn-warning">Edit</a>
+                                <form method="POST" 
+                                      action="{{ url_for('dataset.delete_ratedataset', dataset_id=dataset, rate_id=ratedataset.id) }}" 
+                                      class="m-0">
+                                    {{ form.hidden_tag() }}
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="text-center">
+            <p class="text-muted">No rates for this dataset yet.</p>
+            <a href="{{ url_for('dataset.create_ratedataset', dataset_id=dataset) }}" class="btn btn-primary">Be the First</a>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
