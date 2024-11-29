@@ -12,7 +12,7 @@ body:
     attributes:
       label: "Bug description"
       description: "Describe in detail the objective of the issue using imperative. Explain clearly what is the problem."
-      placeholder: Example: "The button doesn't work."
+      placeholder: "The button doesn't work."
     validations:
       required: true
   - type: textarea

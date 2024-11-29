@@ -11,7 +11,7 @@ body:
     attributes:
       label: "Description of the feature."
       description: "Describe in detail the objective of the issue using imperative. Explain what needs to be done and what it is for."
-      placeholder: Example: "We need to implement a user authentication system that allows login with email and password."
+      placeholder: "We need to implement a user authentication system that allows login with email and password."
     validations:
       required: true
   - type: textarea
