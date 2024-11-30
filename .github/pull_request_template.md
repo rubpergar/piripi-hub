@@ -1,6 +1,4 @@
-## Title #ISSUE_NUMBER
-
-Use Conventional Commits convention for the title. Example: feat: add auth user #10
+Use Conventional Commits convention for the title. Example: feat: add auth user
 
 ### Description
 
