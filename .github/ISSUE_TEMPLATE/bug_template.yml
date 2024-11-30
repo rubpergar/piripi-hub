@@ -1,7 +1,7 @@
 name: "Create an fix issue"
 description: "Report a problem that you find in order to ensure the quality of the project."
-title: "[fix] Brief description of the problem."
-labels: ["fix"]
+title: "[fix] Brief description of the problem"
+labels: bug
 body:
   - type: markdown
     attributes:

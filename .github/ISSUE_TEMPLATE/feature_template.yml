@@ -1,7 +1,7 @@
 name: "Definition of feature"
 description: "Defines a new feature to improve the project."
-title: "[feat] Brief description of the feature."
-labels: ["feature"]
+title: "[feat] Brief description of the feature"
+labels: enhancement
 body:
   - type: markdown
     attributes:
