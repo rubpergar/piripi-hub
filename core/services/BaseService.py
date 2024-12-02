@@ -1,4 +1,4 @@
-from flask import flash, redirect, url_for, render_template
+from flask import abort, flash, redirect, url_for, render_template
 
 
 class BaseService:
@@ -18,7 +18,10 @@ class BaseService:
         return self.repository.get_or_404(id)
     
     def get_all(self):
-        return self.repository.get_all()
+        datasets = self.repository.get_all()
+        if not datasets:
+            abort(404, description="No datasets found")
+        return datasets
 
     def update(self, id, **kwargs):
         return self.repository.update(id, **kwargs)

@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+import os
 
 from flask import request
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -103,19 +104,6 @@ class DataSet(db.Model):
     def get_file_total_size_for_human(self):
         from app.modules.dataset.services import SizeService
         return SizeService().get_human_readable_size(self.get_file_total_size())
-
-    def get_files_in_formats(self, formats: list) -> dict:
-        """Devuelve un diccionario de archivos en varios formatos."""
-        files_in_formats = {}
-        for fm in self.feature_models:
-            for file in fm.files:
-                for format_extension in formats:
-                    formatted_file_path = f"{file.get_path()}.{format_extension}"
-                    if os.path.exists(formatted_file_path):
-                        if format_extension not in files_in_formats:
-                            files_in_formats[format_extension] = []
-                        files_in_formats[format_extension].append(formatted_file_path)
-        return files_in_formats
     
     def get_uvlhub_doi(self):
         from app.modules.dataset.services import DataSetService
