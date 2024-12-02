@@ -42,7 +42,7 @@ def test_zip_all_datasets():
             user_dir = os.path.join(uploads_dir, 'user_123')
             os.makedirs(user_dir)
 
-            dataset_dir = os.path.join(user_dir, 'dataset_1') 
+            dataset_dir = os.path.join(user_dir, 'dataset_1')
             os.makedirs(dataset_dir)
 
             uvl_files = ['file1.uvl', 'file2.uvl', 'file3.uvl']
@@ -58,7 +58,7 @@ def test_zip_all_datasets():
                 for file_name in uvl_files:
                     expected_path = f'dataset_1/{file_name}'
                     zip_files = zipf.namelist()
-                    print(zip_files) 
+                    print(zip_files)
                     assert expected_path in zip_files, f"Expected file path {expected_path} not found in {zip_files}"
 
             assert mock_convert_and_add.call_count == len(uvl_files) * 4
