@@ -32,35 +32,44 @@ def mock_dataset_with_files():
 def test_zip_all_datasets():
     obj = DataSetService()
 
+    # Mocks para is_synchronized y convert_and_add_to_zip
     with mock.patch.object(obj, 'is_synchronized', return_value=True), \
          mock.patch.object(obj, 'convert_and_add_to_zip') as mock_convert_and_add:
 
+        # Usamos tempfile.TemporaryDirectory() para crear directorios temporales durante la prueba
         with tempfile.TemporaryDirectory() as temp_dir:
+            # La carpeta "uploads" se crea dentro del directorio temporal
             uploads_dir = os.path.join(temp_dir, 'uploads')
-            os.makedirs(uploads_dir)
+            os.makedirs(uploads_dir)  # Crear "uploads" dentro de temp_dir
 
+            # Simulamos un directorio de usuario
             user_dir = os.path.join(uploads_dir, 'user_123')
             os.makedirs(user_dir)
 
+            # Simulamos un directorio de dataset
             dataset_dir = os.path.join(user_dir, 'dataset_1')
             os.makedirs(dataset_dir)
 
+            # Creamos archivos .uvl dentro de 'dataset_1'
             uvl_files = ['file1.uvl', 'file2.uvl', 'file3.uvl']
             for file_name in uvl_files:
                 uvl_file = os.path.join(dataset_dir, file_name)
                 with open(uvl_file, 'w') as f:
                     f.write("dummy data")
 
+            # Ejecutamos la función de zipeado
             zip_path = obj.zip_all_datasets()
 
+            # Verificamos que el archivo ZIP se haya creado correctamente
             assert os.path.exists(zip_path)
             with ZipFile(zip_path, 'r') as zipf:
                 for file_name in uvl_files:
                     expected_path = f'dataset_1/{file_name}'
                     zip_files = zipf.namelist()
-                    print(zip_files)
+                    print(zip_files)  # Para depurar y ver qué archivos están realmente dentro del zip
                     assert expected_path in zip_files, f"Expected file path {expected_path} not found in {zip_files}"
 
+            # Verificamos que la función convert_and_add_to_zip haya sido llamada el número esperado de veces
             assert mock_convert_and_add.call_count == len(uvl_files) * 4
             
             for file_name in uvl_files:
