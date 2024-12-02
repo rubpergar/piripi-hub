@@ -285,7 +285,7 @@ def get_unsynchronized_dataset(dataset_id):
 
 
 @dataset_bp.route("/rate/<int:dataset_id>", methods=["GET"], endpoint="rate")
-@login_required
+# @login_required
 def viewRates(dataset_id):
     form = RateForm()
     ratedata = rateDataset_service.get_all_comments(dataset_id)
