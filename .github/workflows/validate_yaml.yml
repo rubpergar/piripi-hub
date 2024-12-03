@@ -1,0 +1,19 @@
+name: Validate YAML
+
+on:
+  push:
+    branches: [main, develop, workflows]
+
+jobs:
+  validate_yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install yamllint
+        run: |
+          sudo apt-get install yamllint
+
+      - name: Lint YAML files
+        run: |
+          yamllint .
