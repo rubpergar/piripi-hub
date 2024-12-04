@@ -23,28 +23,28 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4  # Corregido la indentación a 6 espacios
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+      - name: Prepare environment
+        run: |
+          sed -i '/rosemary @ file:\/\/\/app/d' requirements.txt
 
-    - name: Prepare environment
-      run: |
-        sed -i '/rosemary @ file:\/\/\/app/d' requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Run Tests
-      env:
-        FLASK_ENV: testing
-        MARIADB_HOSTNAME: 127.0.0.1
-        MARIADB_PORT: 3306
-        MARIADB_TEST_DATABASE: uvlhubdb_test
-        MARIADB_USER: uvlhub_user
-        MARIADB_PASSWORD: uvlhub_password
-      run: |
-        pytest app/modules/ --ignore-glob='*selenium*'
+      - name: Run Tests
+        env:
+          FLASK_ENV: testing
+          MARIADB_HOSTNAME: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_TEST_DATABASE: uvlhubdb_test
+          MARIADB_USER: uvlhub_user
+          MARIADB_PASSWORD: uvlhub_password
+        run: |
+          pytest app/modules/ --ignore-glob='*selenium*'

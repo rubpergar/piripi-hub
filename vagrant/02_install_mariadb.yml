@@ -33,14 +33,19 @@
         content: |
           CREATE DATABASE IF NOT EXISTS {{ mariadb_database }};
           CREATE DATABASE IF NOT EXISTS {{ mariadb_test_database }};
-          CREATE USER IF NOT EXISTS '{{ mariadb_user }}'@'localhost' IDENTIFIED BY '{{ mariadb_password }}';
-          GRANT ALL PRIVILEGES ON {{ mariadb_database }}.* TO '{{ mariadb_user }}'@'localhost';
-          GRANT ALL PRIVILEGES ON {{ mariadb_test_database }}.* TO '{{ mariadb_user }}'@'localhost';
+          CREATE USER IF NOT EXISTS '{{ mariadb_user }}'@'localhost'
+            IDENTIFIED BY '{{ mariadb_password }}';
+          GRANT ALL PRIVILEGES ON {{ mariadb_database }}.* 
+          TO '{{ mariadb_user }}'@'localhost';
+          GRANT ALL PRIVILEGES ON {{ mariadb_test_database }}.* 
+          TO '{{ mariadb_user }}'@'localhost';
           FLUSH PRIVILEGES;
         dest: /tmp/setup.sql
 
     - name: Import SQL script
-      command: bash -c "mysql -u root -p'{{ mariadb_root_password }}' < /tmp/setup.sql"
+      command: |
+        bash -c "mysql -u root -p'{{ mariadb_root_password }}' 
+          < /tmp/setup.sql"
 
     - name: Remove temporary SQL script
       file:

@@ -30,4 +30,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Selenium Tests
-        run: python -m pytest tests/e2e
+        run: pytest app/modules/
