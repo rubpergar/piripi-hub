@@ -21,7 +21,7 @@ class TestTestrateselenium():
   def test_testrateselenium(self):
     self.driver.get("http://127.0.0.1:5000/")
     self.driver.set_window_size(1702, 963)
-    self.driver.find_element(By.CSS_SELECTOR, ".nav-link:nth-child(1)").click()
+    self.driver.get("http://127.0.0.1:5000/login")
     time.sleep(2)
     self.driver.find_element(By.ID, "email").click()
     self.driver.find_element(By.ID, "email").send_keys("user1@example.com")
@@ -51,4 +51,3 @@ class TestTestrateselenium():
     time.sleep(2)
     self.driver.find_element(By.CSS_SELECTOR, ".btn-danger").click()
     time.sleep(2)
-  
