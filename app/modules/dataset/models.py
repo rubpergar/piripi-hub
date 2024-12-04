@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+import os
 
 from flask import request
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -78,12 +79,12 @@ class DataSet(db.Model):
     ds_meta_data = db.relationship('DSMetaData', backref=db.backref('data_set', uselist=False))
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
-    def name(self):
+    def name(self): 
         return self.ds_meta_data.title
 
     def files(self):
         return [file for fm in self.feature_models for file in fm.files]
-
+    
     def delete(self):
         db.session.delete(self)
         db.session.commit()
@@ -103,7 +104,7 @@ class DataSet(db.Model):
     def get_file_total_size_for_human(self):
         from app.modules.dataset.services import SizeService
         return SizeService().get_human_readable_size(self.get_file_total_size())
-
+    
     def get_uvlhub_doi(self):
         from app.modules.dataset.services import DataSetService
         return DataSetService().get_uvlhub_doi(self)
@@ -164,3 +165,23 @@ class DOIMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     dataset_doi_old = db.Column(db.String(120))
     dataset_doi_new = db.Column(db.String(120))
+
+
+class RateDatasets(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    rate = db.Column(db.Integer)
+    comment = db.Column(db.String(256))
+    dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    data_set = db.relationship('DataSet', backref='rate_data_sets', lazy=True)
+    user = db.relationship('User', backref='rate_data_sets', lazy=True)
+
+    def __rep__(self):
+        return (
+                f'RateDatasets<'
+                f'{self.id}, Rate={self.rate}, '
+                f'Comment={self.comment}, '
+                f'Dataset={self.data_set.tittle}, '
+                f'Author={self.user.username}>'
+                )

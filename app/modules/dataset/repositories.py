@@ -11,8 +11,10 @@ from app.modules.dataset.models import (
     DSDownloadRecord,
     DSMetaData,
     DSViewRecord,
-    DataSet
+    DataSet,
+    RateDatasets
 )
+
 from core.repositories.BaseRepository import BaseRepository
 
 logger = logging.getLogger(__name__)
@@ -68,6 +70,15 @@ class DataSetRepository(BaseRepository):
     def __init__(self):
         super().__init__(DataSet)
 
+    def get(self, dataset_id: int) -> DataSet:
+        return self.model.query.get(dataset_id)
+    
+    def is_synchronized(self, dataset_id: int) -> bool:
+        dataset = self.model.query.join(DSMetaData).filter(self.model.id == dataset_id).first()
+        if dataset and dataset.ds_meta_data.dataset_doi:
+            return True
+        return False
+    
     def get_synchronized(self, current_user_id: int) -> DataSet:
         return (
             self.model.query.join(DSMetaData)
@@ -113,6 +124,9 @@ class DataSetRepository(BaseRepository):
             .limit(5)
             .all()
         )
+    
+    def get_all(self):
+        return self.model.query.all()
 
 
 class DOIMappingRepository(BaseRepository):
@@ -121,3 +135,11 @@ class DOIMappingRepository(BaseRepository):
 
     def get_new_doi(self, old_doi: str) -> str:
         return self.model.query.filter_by(dataset_doi_old=old_doi).first()
+
+
+class RateRepository(BaseRepository):
+    def __init__(self):
+        super().__init__(RateDatasets)
+
+    def get_all_comments(self, dataset_id):
+        return RateDatasets.query.filter_by(dataset_id=dataset_id).all()
