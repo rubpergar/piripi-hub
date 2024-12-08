@@ -5,6 +5,7 @@ on:
     workflows:
       - "Python Lint"
       - "Run tests"
+      - "Validate YAML"
     types:
       - completed
 
