@@ -69,7 +69,7 @@ class DataSetService(BaseService):
 
     def is_synchronized(self, dataset_id: int) -> bool:
         return self.repository.is_synchronized(dataset_id)
-    
+
     def get_synchronized(self, current_user_id: int) -> DataSet:
         return self.repository.get_synchronized(current_user_id)
 
@@ -150,6 +150,7 @@ class DataSetService(BaseService):
     
     def get_all_datasets(self):
         return self.repository.get_all_datasets()
+
 
 class AuthorService(BaseService):
     def __init__(self):

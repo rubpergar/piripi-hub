@@ -6,8 +6,7 @@ import tempfile
 import uuid
 from datetime import datetime, timezone
 from zipfile import ZipFile
-from flask import Response, abort
-from flask import render_template, request, send_file
+from flask import send_file
 from flask_login import login_required, current_user
 from app import db
 from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
@@ -24,7 +23,6 @@ from flask import (
     url_for,
     flash
 )
-from flask_login import login_required, current_user
 
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.forms import DataSetForm
@@ -186,8 +184,6 @@ def delete():
         return jsonify({"message": "File deleted successfully"})
 
     return jsonify({"error": "Error: File not found"})
-
-
 
 
 @dataset_bp.route("/dataset/download_all", methods=["GET"])
@@ -391,7 +387,7 @@ def delete_rate(dataset_id, rate_id):
     else:
         flash('Error deleting rate', 'error')
     return redirect(url_for('dataset.rate', dataset_id=dataset_id))
-    
+
 @dataset_bp.route("/dataset/download/<int:dataset_id>", methods=["GET"])
 def download_dataset(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
