@@ -38,7 +38,8 @@
       shell: |
         source {{ working_dir }}venv/bin/activate
         cd {{ working_dir }}
-        nohup flask run --host=0.0.0.0 --port=5000 --reload --debug > app.log 2>&1 &
+        nohup flask run --host=0.0.0.0 --port=5000 --reload --debug \
+        > app.log 2>&1 &
       args:
         executable: /bin/bash
       environment: "{{ common_environment }}"

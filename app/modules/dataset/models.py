@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+import os
 
 from flask import request
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -103,19 +104,6 @@ class DataSet(db.Model):
     def get_file_total_size_for_human(self):
         from app.modules.dataset.services import SizeService
         return SizeService().get_human_readable_size(self.get_file_total_size())
-
-    def get_files_in_formats(self, formats: list) -> dict:
-        """Devuelve un diccionario de archivos en varios formatos."""
-        files_in_formats = {}
-        for fm in self.feature_models:
-            for file in fm.files:
-                for format_extension in formats:
-                    formatted_file_path = f"{file.get_path()}.{format_extension}"
-                    if os.path.exists(formatted_file_path):
-                        if format_extension not in files_in_formats:
-                            files_in_formats[format_extension] = []
-                        files_in_formats[format_extension].append(formatted_file_path)
-        return files_in_formats
     
     def get_uvlhub_doi(self):
         from app.modules.dataset.services import DataSetService
@@ -177,3 +165,23 @@ class DOIMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     dataset_doi_old = db.Column(db.String(120))
     dataset_doi_new = db.Column(db.String(120))
+
+
+class RateDatasets(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    rate = db.Column(db.Integer)
+    comment = db.Column(db.String(256))
+    dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    data_set = db.relationship('DataSet', backref='rate_data_sets', lazy=True)
+    user = db.relationship('User', backref='rate_data_sets', lazy=True)
+
+    def __rep__(self):
+        return (
+                f'RateDatasets<'
+                f'{self.id}, Rate={self.rate}, '
+                f'Comment={self.comment}, '
+                f'Dataset={self.data_set.tittle}, '
+                f'Author={self.user.username}>'
+                )
