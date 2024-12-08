@@ -17,7 +17,7 @@ load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 
-mail = Mail() 
+mail = Mail()
 
 
 def create_app(config_name='development'):
@@ -28,7 +28,7 @@ def create_app(config_name='development'):
     config_manager.load_config(config_name=config_name)
 
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-    app.config['MAIL_PORT'] = 587 
+    app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
     app.config['MAIL_USE_SSL'] = False
     app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
@@ -77,4 +77,3 @@ def create_app(config_name='development'):
     return app
 
 # app = create_app()
-

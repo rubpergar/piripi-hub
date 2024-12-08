@@ -17,5 +17,6 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('Remember me')
     submit = SubmitField('Login')
 
+
 class PasswordRecoveryForm(FlaskForm):
     email = StringField('Email', validators=[Email()])

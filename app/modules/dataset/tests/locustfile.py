@@ -21,6 +21,7 @@ class DatasetUser(HttpUser):
     max_wait = 9000
     host = get_host_for_locust_testing()
 
+
 class DatasetDownloadUser(HttpUser):
     host = "http://localhost:5000"
 
@@ -30,6 +31,7 @@ class DatasetDownloadUser(HttpUser):
     def download_all_datasets(self):
         """Simula la descarga del archivo ZIP con todos los datasets"""
         response = self.client.get("/dataset/download/all")
-        
+
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        assert response.headers["Content-Type"] == "application/zip", f"Expected content type 'application/zip', got {response.headers['Content-Type']}"
+        assert response.headers["Content-Type"] == "application/zip", \
+            f"Expected content type 'application/zip', got {response.headers['Content-Type']}"

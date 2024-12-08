@@ -1,11 +1,14 @@
 from flask import render_template, redirect, url_for, request, flash, current_app
 from flask_login import current_user, login_user, logout_user
+from app import mail
 
 from app.modules.auth import auth_bp
 from app.modules.auth.forms import SignupForm, LoginForm, PasswordRecoveryForm
 from app.modules.auth.services import AuthenticationService
 from app.modules.profile.services import UserProfileService
+from flask_mail import Message
 from app.modules.auth.models import User
+from werkzeug.security import generate_password_hash
 
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from app import db
@@ -57,17 +60,20 @@ def logout():
     logout_user()
     return redirect(url_for('public.index'))
 
+
 def generate_reset_token(email):
     s = Serializer(current_app.config['SECRET_KEY'])
     return s.dumps({'email': email})
 
+
 def verify_reset_token(token):
     s = Serializer(current_app.config['SECRET_KEY'])
     try:
-        data = s.loads(token, max_age=600) 
+        data = s.loads(token, max_age=600)
     except Exception:
-        return None 
+        return None
     return data.get('email')
+
 
 def send_reset_email(user_email):
     token = generate_reset_token(user_email)
@@ -75,21 +81,12 @@ def send_reset_email(user_email):
 
     msg = Message('Password Reset Request', recipients=[user_email])
     msg.body = f'Click in the link to reset your password: {reset_url}'
-    
+
     try:
         mail.send(msg)
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
-from flask import render_template, redirect, url_for, request
-from flask_login import current_user, login_user, logout_user
-from app import mail 
-
-from app.modules.auth import auth_bp
-from app.modules.auth.forms import SignupForm, LoginForm, PasswordRecoveryForm
-from app.modules.auth.services import AuthenticationService
-from app.modules.profile.services import UserProfileService
-from flask_mail import Message
 
 authentication_service = AuthenticationService()
 user_profile_service = UserProfileService()
@@ -126,8 +123,6 @@ def recover_password():
     return render_template("auth/recover_password_form.html", form=form)
 
 
-from werkzeug.security import generate_password_hash
-
 @auth_bp.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     email = verify_reset_token(token)
@@ -152,4 +147,3 @@ def reset_password(token):
         return redirect(url_for('auth.login'))
 
     return render_template('auth/reset_password.html', token=token)
-
