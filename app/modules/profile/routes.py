@@ -21,7 +21,7 @@ def edit_profile():
     form = UserProfileForm()
     if request.method == "POST":
         service = UserProfileService()
-        result, errors = service.update_profile(profile.id, form)
+        result, errors = service.update_profile(current_user.profile.id, form)
         return service.handle_service_response(
             result, errors, "profile.edit_profile", "Profile updated successfully", "profile/edit.html", form
         )
