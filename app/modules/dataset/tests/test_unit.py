@@ -4,10 +4,10 @@ from app.modules.dataset.services import DataSetService
 from app.modules.dataset.models import DataSet
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.hubfile.models import Hubfile
-from flask import Flask
 import tempfile
 import os
 from zipfile import ZipFile
+
 
 @pytest.fixture
 def mock_dataset_service():
@@ -17,6 +17,7 @@ def mock_dataset_service():
     service.repository = mock.Mock()
     service.is_synchronized = mock.Mock()
     return service
+
 
 @pytest.fixture
 def mock_dataset_with_files():
@@ -28,6 +29,7 @@ def mock_dataset_with_files():
     feature_model.files = [file1, file2]
     dataset.feature_models = [feature_model]
     return dataset
+
 
 def test_zip_all_datasets():
     obj = DataSetService()
@@ -42,7 +44,7 @@ def test_zip_all_datasets():
             user_dir = os.path.join(uploads_dir, 'user_123')
             os.makedirs(user_dir)
 
-            dataset_dir = os.path.join(user_dir, 'dataset_1') 
+            dataset_dir = os.path.join(user_dir, 'dataset_1')
             os.makedirs(dataset_dir)
 
             uvl_files = ['file1.uvl', 'file2.uvl', 'file3.uvl']
@@ -58,44 +60,48 @@ def test_zip_all_datasets():
                 for file_name in uvl_files:
                     expected_path = f'dataset_1/{file_name}'
                     zip_files = zipf.namelist()
-                    print(zip_files) 
+                    print(zip_files)
                     assert expected_path in zip_files, f"Expected file path {expected_path} not found in {zip_files}"
 
             assert mock_convert_and_add.call_count == len(uvl_files) * 4
-            
+
             for file_name in uvl_files:
                 for conversion_type in ['uvl', 'glencoe', 'splot', 'cnf']:
                     mock_convert_and_add.assert_any_call(mock.ANY, 1, file_name, 'dataset_1')
 
 
-
 def test_get_hubfile_by_uvl_filename(mock_dataset_service, mock_dataset_with_files):
     """Prueba para get_hubfile_by_uvl_filename"""
     mock_dataset_service.repository.get.return_value = mock_dataset_with_files
-    
+
     file = mock_dataset_service.get_hubfile_by_uvl_filename(1, "file1.uvl")
     assert file.name == "file1.uvl"
-    
+
     with pytest.raises(FileNotFoundError):
         mock_dataset_service.get_hubfile_by_uvl_filename(1, "non_existent_file.uvl")
+
 
 @mock.patch('app.modules.dataset.services.DataSetService.convert_to_glencoe')
 @mock.patch('app.modules.dataset.services.DataSetService.convert_to_splot')
 @mock.patch('app.modules.dataset.services.DataSetService.convert_to_cnf')
-def test_convert_and_add_to_zip(mock_convert_cnf, mock_convert_splot, mock_convert_glencoe, mock_dataset_service, mock_dataset_with_files):
+def test_convert_and_add_to_zip(
+    mock_convert_cnf, mock_convert_splot, mock_convert_glencoe,
+    mock_dataset_service, mock_dataset_with_files
+):
     """Prueba para convert_and_add_to_zip"""
 
     mock_dataset_service.is_synchronized.return_value = True
     mock_dataset_service.repository.get.return_value = mock_dataset_with_files
-    
-    with tempfile.NamedTemporaryFile(suffix='.zip') as temp_zip:
-        with mock.patch("zipfile.ZipFile") as mock_zip:
-            mock_zip.return_value.__enter__.return_value = mock.MagicMock()
-            mock_dataset_service.convert_and_add_to_zip(mock_zip.return_value.__enter__.return_value, 1, "file1.uvl", "dataset_1")
-            
-            mock_convert_glencoe.assert_called_once()
-            mock_convert_splot.assert_called_once()
-            mock_convert_cnf.assert_called_once()
+
+    with mock.patch("zipfile.ZipFile") as mock_zip:
+        mock_zip.return_value.__enter__.return_value = mock.MagicMock()
+        mock_dataset_service.convert_and_add_to_zip(
+            mock_zip.return_value.__enter__.return_value, 1, "file1.uvl", "dataset_1")
+
+        mock_convert_glencoe.assert_called_once()
+        mock_convert_splot.assert_called_once()
+        mock_convert_cnf.assert_called_once()
+
 
 @pytest.mark.parametrize("conversion_type, method", [
     ("glencoe", "convert_to_glencoe"),

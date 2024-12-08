@@ -69,7 +69,7 @@ class DataSetService(BaseService):
 
     def is_synchronized(self, dataset_id: int) -> bool:
         return self.repository.is_synchronized(dataset_id)
-    
+
     def get_synchronized(self, current_user_id: int) -> DataSet:
         return self.repository.get_synchronized(current_user_id)
 
@@ -147,30 +147,29 @@ class DataSetService(BaseService):
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
         domain = os.getenv('DOMAIN', 'localhost')
         return f'http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}'
-    
-    def zip_all_datasets(self) -> str:
-        temp_dir = tempfile.mkdtemp() 
-        zip_path = os.path.join(temp_dir, "all_datasets.zip") 
 
-        with ZipFile(zip_path, "w") as zipf: 
-            for zz in os.listdir("uploads"): 
+    def zip_all_datasets(self) -> str:
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, "all_datasets.zip")
+
+        with ZipFile(zip_path, "w") as zipf:
+            for zz in os.listdir("uploads"):
                 user_path = os.path.join("uploads", zz)
 
-                if os.path.isdir(user_path) and zz.startswith("user_"):  
-                    for dataset_dir in os.listdir(user_path): 
+                if os.path.isdir(user_path) and zz.startswith("user_"):
+                    for dataset_dir in os.listdir(user_path):
                         dataset_path = os.path.join(user_path, dataset_dir)
 
-                        if os.path.isdir(dataset_path) and dataset_dir.startswith("dataset_"): 
+                        if os.path.isdir(dataset_path) and dataset_dir.startswith("dataset_"):
                             dataset_id = int(dataset_dir.split("_")[1])
 
-                            if self.is_synchronized(dataset_id): 
-                                print(f"Adding dataset: {dataset_dir}") 
+                            if self.is_synchronized(dataset_id):
+                                print(f"Adding dataset: {dataset_dir}")
 
                                 for subdir, dirs, files in os.walk(dataset_path):
                                     for file in files:
                                         full_path = os.path.join(subdir, file)
                                         relative_path = os.path.relpath(full_path, dataset_path)
-
 
                                         if file.endswith('.uvl'):
 
@@ -181,20 +180,19 @@ class DataSetService(BaseService):
                                             self.convert_and_add_to_zip(zipf, dataset_id, file, dataset_name)
         return zip_path
 
-
     def get_hubfile_by_uvl_filename(self, dataset_id, uvl_filename):
-        dataset = self.repository.get(dataset_id)  
+        dataset = self.repository.get(dataset_id)
 
         if not dataset:
             raise FileNotFoundError(f"Dataset with ID {dataset_id} not found")
 
         for feature_model in dataset.feature_models:
-            for file in feature_model.files: 
+            for file in feature_model.files:
                 if file.name == uvl_filename:
-                    return file 
+                    return file
 
         raise FileNotFoundError(f"UVL file {uvl_filename} not found in dataset {dataset_id}")
-    
+
     def convert_and_add_to_zip(self, zipf, dataset_id, uvl_filename, dataset_dir):
         formats = ['glencoe', 'splot', 'cnf']
         for conversion_type in formats:
@@ -210,7 +208,13 @@ class DataSetService(BaseService):
             elif conversion_type == "cnf":
                 self.convert_to_cnf(dataset_id, uvl_filename, temp_file.name)
 
-            zipf.write(temp_file.name, arcname=os.path.join(dataset_dir, f"{os.path.splitext(uvl_filename)[0]}_{conversion_type}.txt"))
+            zipf.write(
+                temp_file.name,
+                arcname=os.path.join(
+                    dataset_dir,
+                    f"{os.path.splitext(uvl_filename)[0]}_{conversion_type}.txt"
+                )
+            )
         finally:
             os.remove(temp_file.name)
 
@@ -224,7 +228,7 @@ class DataSetService(BaseService):
             self.convert_to_cnf(dataset_id, uvl_filename, temp_filename)
         else:
             raise ValueError(f"Unsupported conversion type: {conversion_type}")
-        
+
     def convert_to_glencoe(self, dataset_id, uvl_filename, temp_filename):
         hubfile = self.get_hubfile_by_uvl_filename(dataset_id, uvl_filename)
         fm = UVLReader(hubfile.get_path()).transform()
@@ -241,7 +245,6 @@ class DataSetService(BaseService):
         sat = FmToPysat(fm).transform()
         DimacsWriter(temp_filename, sat).transform()
 
-    
 
 class AuthorService(BaseService):
     def __init__(self):

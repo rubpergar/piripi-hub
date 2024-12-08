@@ -10,7 +10,8 @@ class ExploreRepository(BaseRepository):
     def __init__(self):
         super().__init__(DataSet)
 
-    def filter(self, query="", sorting="newest", publication_type="any", tags=[], number_of_features= "", number_of_models= "", **kwargs):
+    def filter(self, query="", sorting="newest", publication_type="any",
+               tags=[], number_of_features="", number_of_models="", **kwargs):
         # Normalize and remove unwanted characters
         normalized_query = unidecode.unidecode(query).lower()
         cleaned_query = re.sub(r'[,.":\'()\[\]^;!¡¿?]', "", normalized_query)
@@ -38,7 +39,7 @@ class ExploreRepository(BaseRepository):
             .join(FeatureModel.fm_meta_data)
             .filter(or_(*filters))
             .filter(DSMetaData.dataset_doi.isnot(None))  # Exclude datasets with empty dataset_doi
-        )   
+        )
 
         if publication_type != "any":
             matching_type = None
@@ -55,10 +56,10 @@ class ExploreRepository(BaseRepository):
 
         if number_of_features:
             datasets = datasets.filter(DSMetrics.number_of_features == number_of_features)
-        
+
         if number_of_models:
             datasets = datasets.filter(DSMetrics.number_of_models == number_of_models)
-            
+
         # Order by created_at
         if sorting == "oldest":
             datasets = datasets.order_by(self.model.created_at.asc())
