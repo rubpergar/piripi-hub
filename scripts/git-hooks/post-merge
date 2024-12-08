@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Detecta el nombre de la rama actual
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Verifica si la rama actual es develop o main
+if [ "$current_branch" = "develop" ] || [ "$current_branch" = "main" ]; then
+    echo "Post-merge hook: Applying database migrations on $current_branch branch..."
+
+    # Activar el entorno virtual si es necesario
+    source venv/bin/activate
+
+    # Ejecuta los comandos de migración
+    flask db migrate -m "Applying new migrations"
+    flask db upgrade
+
+    echo "Database migrations applied successfully on $current_branch branch."
+else
+    echo "Post-merge hook: No migrations applied, branch $current_branch does not require it."
+fi
