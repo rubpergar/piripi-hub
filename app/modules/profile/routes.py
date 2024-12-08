@@ -1,7 +1,7 @@
 from app.modules.auth.services import AuthenticationService
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
-from flask import render_template, redirect, url_for, request
+from flask import flash, render_template, redirect, url_for, request
 from flask_login import login_required, current_user
 
 from app import db
@@ -57,9 +57,16 @@ def my_profile():
 
 
 @profile_bp.route('/profile/<int:user_id>')
-@login_required
 def view_profile(user_id):
     user = db.session.query(User).filter_by(id=user_id).first_or_404()
+
+    if not user.profile.public_data and current_user.id != user_id:
+        flash("User data is not public", "error")
+        dataset = db.session.query(DataSet) \
+            .filter(DataSet.user_id == user_id) \
+            .first()
+        return render_template('dataset/view_dataset.html', dataset=dataset)
+
     page = request.args.get('page', 1, type=int)
     per_page = 5
 
