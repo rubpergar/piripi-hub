@@ -39,11 +39,16 @@ jobs:
           DOCKER_CLI_EXPERIMENTAL: enabled
 
       - name: Push Docker image to Docker Hub
-        run: docker push drorganvidez/uvlhub:${{ github.event.release.tag_name }}
+        run: >
+          docker push drorganvidez/uvlhub:${{ github.event.release.tag_name }}
+
 
       - name: Tag and push latest
         run: |
-          docker tag drorganvidez/uvlhub:${{ github.event.release.tag_name }} drorganvidez/uvlhub:latest
+          docker tag \
+            drorganvidez/uvlhub:${{ github.event.release.tag_name }} \
+            drorganvidez/uvlhub:latest
           docker push drorganvidez/uvlhub:latest
+
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled

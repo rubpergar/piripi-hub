@@ -27,7 +27,7 @@ jobs:
           --health-retries=3
 
     steps:
-      - uses: actions/checkout@v4  # Corregido la indentación a 6 espacios      
+      - uses: actions/checkout@v4  # Corregido la indentación a 6 espacios
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
