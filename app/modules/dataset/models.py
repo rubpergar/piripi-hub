@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-import os
 
 from flask import request
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -79,12 +78,12 @@ class DataSet(db.Model):
     ds_meta_data = db.relationship('DSMetaData', backref=db.backref('data_set', uselist=False))
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
-    def name(self): 
+    def name(self):
         return self.ds_meta_data.title
 
     def files(self):
         return [file for fm in self.feature_models for file in fm.files]
-    
+
     def delete(self):
         db.session.delete(self)
         db.session.commit()
@@ -104,7 +103,7 @@ class DataSet(db.Model):
     def get_file_total_size_for_human(self):
         from app.modules.dataset.services import SizeService
         return SizeService().get_human_readable_size(self.get_file_total_size())
-    
+
     def get_uvlhub_doi(self):
         from app.modules.dataset.services import DataSetService
         return DataSetService().get_uvlhub_doi(self)

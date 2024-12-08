@@ -119,8 +119,10 @@ def download_selected_files():
         for file_id in file_ids:
             file = HubfileService().get_or_404(file_id)
             filename = file.name
-                     
-            directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
+
+            directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/" + \
+                f"dataset_{file.feature_model.data_set_id}/"
+
             parent_directory_path = os.path.dirname(current_app.root_path)
             file_path = os.path.join(parent_directory_path, directory_path, filename)
 
@@ -130,7 +132,7 @@ def download_selected_files():
             user_cookie = request.cookies.get("file_download_cookie")
             if not user_cookie:
                 user_cookie = str(uuid.uuid4())
-                
+
             # Check if the download record already exists for this cookie
             existing_record = HubfileDownloadRecord.query.filter_by(
                 user_id=current_user.id if current_user.is_authenticated else None,
