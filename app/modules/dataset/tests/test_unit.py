@@ -63,7 +63,7 @@ def test_zip_all_datasets():
                     print(zip_files)
                     assert expected_path in zip_files, f"Expected file path {expected_path} not found in {zip_files}"
 
-            assert mock_convert_and_add.call_count == len(uvl_files) * 4
+            assert mock_convert_and_add.call_count == len(uvl_files) * 4 + 4
 
             for file_name in uvl_files:
                 for conversion_type in ['uvl', 'glencoe', 'splot', 'cnf']:
