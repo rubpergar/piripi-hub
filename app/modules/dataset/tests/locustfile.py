@@ -33,5 +33,6 @@ class DatasetDownloadUser(HttpUser):
         response = self.client.get("/dataset/download/all")
 
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        assert response.headers["Content-Type"] == "application/zip", \
-            f"Expected content type 'application/zip', got {response.headers['Content-Type']}"
+        assert (
+            response.headers["Content-Type"] == "application/zip"
+        ), f"Expected content type 'application/zip', got {response.headers['Content-Type']}"

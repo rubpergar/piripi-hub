@@ -41,10 +41,7 @@ class AuthenticationService(BaseService):
             if not surname:
                 raise ValueError("Surname is required.")
 
-            user_data = {
-                "email": email,
-                "password": password
-            }
+            user_data = {"email": email, "password": password}
 
             profile_data = {
                 "name": name,

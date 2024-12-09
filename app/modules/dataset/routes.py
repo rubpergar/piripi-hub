@@ -23,9 +23,7 @@ from flask import (
 
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.forms import RateForm
-from app.modules.dataset.models import (
-    DSDownloadRecord
-)
+from app.modules.dataset.models import DSDownloadRecord
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.services import (
     AuthorService,
@@ -34,7 +32,7 @@ from app.modules.dataset.services import (
     DSViewRecordService,
     DataSetService,
     DOIMappingService,
-    RateDataSetService
+    RateDataSetService,
 )
 from app.modules.zenodo.services import ZenodoService
 
@@ -63,12 +61,17 @@ def create_dataset():
 
         try:
             logger.info("Creating dataset...")
-            dataset = dataset_service.create_from_form(form=form, current_user=current_user)
+            dataset = dataset_service.create_from_form(
+                form=form, current_user=current_user
+            )
             logger.info(f"Created dataset: {dataset}")
             dataset_service.move_feature_models(dataset)
         except Exception as exc:
             logger.exception(f"Exception while create dataset data in local {exc}")
-            return jsonify({"Exception while create dataset data in local: ": str(exc)}), 400
+            return (
+                jsonify({"Exception while create dataset data in local: ": str(exc)}),
+                400,
+            )
 
         # send dataset as deposition to Zenodo
         data = {}
@@ -85,7 +88,9 @@ def create_dataset():
             deposition_id = data.get("id")
 
             # update dataset with deposition id in Zenodo
-            dataset_service.update_dsmetadata(dataset.ds_meta_data_id, deposition_id=deposition_id)
+            dataset_service.update_dsmetadata(
+                dataset.ds_meta_data_id, deposition_id=deposition_id
+            )
 
             try:
                 # iterate for each feature model (one feature model = one request to Zenodo)
@@ -97,7 +102,9 @@ def create_dataset():
 
                 # update DOI
                 deposition_doi = zenodo_service.get_doi(deposition_id)
-                dataset_service.update_dsmetadata(dataset.ds_meta_data_id, dataset_doi=deposition_doi)
+                dataset_service.update_dsmetadata(
+                    dataset.ds_meta_data_id, dataset_doi=deposition_doi
+                )
             except Exception as e:
                 msg = f"it has not been possible upload feature models in Zenodo and update the DOI: {e}"
                 return jsonify({"message": msg}), 200
@@ -241,7 +248,7 @@ def download_dataset(dataset_id):
     existing_record = DSDownloadRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         dataset_id=dataset_id,
-        download_cookie=user_cookie
+        download_cookie=user_cookie,
     ).first()
 
     if not existing_record:
@@ -263,7 +270,7 @@ def subdomain_index(doi):
     new_doi = doi_mapping_service.get_new_doi(doi)
     if new_doi:
         # Redirect to the same path with the new DOI
-        return redirect(url_for('dataset.subdomain_index', doi=new_doi), code=302)
+        return redirect(url_for("dataset.subdomain_index", doi=new_doi), code=302)
 
     # Try to search the dataset by the provided DOI (which should already be the new one)
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
@@ -300,15 +307,21 @@ def get_unsynchronized_dataset(dataset_id):
 def viewRates(dataset_id):
     form = RateForm()
     ratedata = rateDataset_service.get_all_comments(dataset_id)
-    return render_template('rate/index.html', rate_data_sets=ratedata, form=form, dataset=dataset_id)
+    return render_template(
+        "rate/index.html", rate_data_sets=ratedata, form=form, dataset=dataset_id
+    )
 
 
-'''
+"""
 CREATE
-'''
+"""
 
 
-@dataset_bp.route('/ratedataset/create/<int:dataset_id>', methods=['GET', 'POST'], endpoint="create_ratedataset")
+@dataset_bp.route(
+    "/ratedataset/create/<int:dataset_id>",
+    methods=["GET", "POST"],
+    endpoint="create_ratedataset",
+)
 @login_required
 def create_rate(dataset_id):
     form = RateForm()
@@ -317,28 +330,31 @@ def create_rate(dataset_id):
             rate=form.rate.data,
             comment=form.comment.data,
             user_id=current_user.id,
-            dataset_id=dataset_id
+            dataset_id=dataset_id,
         )
         return rateDataset_service.handle_service_response2(
             result=result,
             errors=form.errors,
-            success_url_redirect='dataset.rate',
-            success_msg='Rate successfully published!',
-            error_template='rate/create.html',
+            success_url_redirect="dataset.rate",
+            success_msg="Rate successfully published!",
+            error_template="rate/create.html",
             form=form,
-            id=dataset_id
+            id=dataset_id,
         )
-    return render_template('rate/create.html', form=form, dataset=dataset_id)
+    return render_template("rate/create.html", form=form, dataset=dataset_id)
 
 
-@dataset_bp.route('/ratedataset/edit/<int:dataset_id>/<int:rate_id>',
-                  methods=['GET', 'POST'], endpoint="edit_ratedataset")
+@dataset_bp.route(
+    "/ratedataset/edit/<int:dataset_id>/<int:rate_id>",
+    methods=["GET", "POST"],
+    endpoint="edit_ratedataset",
+)
 @login_required
 def edit_rate(dataset_id, rate_id):
     rate = rateDataset_service.get_or_404(rate_id)
     if rate.user_id != current_user.id:
-        flash('You are not authorized to edit this rate', 'error')
-        return redirect(url_for('dataset.rate', dataset_id=dataset_id))
+        flash("You are not authorized to edit this rate", "error")
+        return redirect(url_for("dataset.rate", dataset_id=dataset_id))
 
     form = RateForm(obj=rate)
     if form.validate_on_submit():
@@ -352,28 +368,33 @@ def edit_rate(dataset_id, rate_id):
         return rateDataset_service.handle_service_response2(
             result=result,
             errors=form.errors,
-            success_url_redirect='dataset.rate',
-            success_msg='Rate successfully published!',
-            error_template='rate/create.html',
+            success_url_redirect="dataset.rate",
+            success_msg="Rate successfully published!",
+            error_template="rate/create.html",
             form=form,
-            id=dataset_id
+            id=dataset_id,
         )
-    return render_template('rate/edit.html', form=form, dataset=dataset_id, rate_id=rate_id)
+    return render_template(
+        "rate/edit.html", form=form, dataset=dataset_id, rate_id=rate_id
+    )
 
 
-@dataset_bp.route('/ratedataset/delete/<int:dataset_id>/<int:rate_id>',
-                  methods=['POST'], endpoint="delete_ratedataset")
+@dataset_bp.route(
+    "/ratedataset/delete/<int:dataset_id>/<int:rate_id>",
+    methods=["POST"],
+    endpoint="delete_ratedataset",
+)
 @login_required
 def delete_rate(dataset_id, rate_id):
     rate = rateDataset_service.get_or_404(rate_id)
     if rate.user_id != current_user.id:
-        flash('You are not authorized to delete this rate', 'error')
-        return redirect(url_for('dataset.rate', dataset_id=dataset_id))
+        flash("You are not authorized to delete this rate", "error")
+        return redirect(url_for("dataset.rate", dataset_id=dataset_id))
 
     result = rateDataset_service.delete(rate_id)
     if result:
-        flash('Rate deleted successfully!', 'sucess')
+        flash("Rate deleted successfully!", "sucess")
     else:
-        flash('Error deleting rate', 'error')
+        flash("Error deleting rate", "error")
 
-    return redirect(url_for('dataset.rate', dataset_id=dataset_id))
+    return redirect(url_for("dataset.rate", dataset_id=dataset_id))
