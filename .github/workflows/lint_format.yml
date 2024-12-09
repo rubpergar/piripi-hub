@@ -3,8 +3,6 @@ name: Python Lint and Format
 on:
   push:
     branches: [main, develop, workflows]
-  pull_request:
-    branches: [main, develop]
 
 jobs:
   lint_and_format:
