@@ -41,7 +41,7 @@ jobs:
           git diff --cached --quiet || git commit -m "Format code with black"
       - name: Push changes
         env:
-          GH_TOKEN: ${{ secrets.FORMATER_TOKEN }}
+          FORMATER_TOKEN: ${{ secrets.FORMATER_TOKEN }}
         run: >
           git remote set-url origin https://github.com/${{ github.repository }}.git
 
