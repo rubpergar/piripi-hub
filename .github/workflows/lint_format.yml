@@ -53,5 +53,6 @@ jobs:
           git remote set-url origin \
             https://github.com/${{ github.repository }}.git
 
-          git push https://x-access-token:${{ secrets.FORMATER_TOKEN }}@github.com/${{ github.repository }} \
+          git push \
+            https://x-access-token:${{ secrets.FORMATER_TOKEN }}@github.com/${{ github.repository }} \
             HEAD:refs/heads/${{ github.ref_name }}
