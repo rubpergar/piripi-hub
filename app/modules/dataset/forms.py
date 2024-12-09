@@ -1,5 +1,13 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, FieldList, FormField, SubmitField, TextAreaField, IntegerField
+from wtforms import (
+    StringField,
+    SelectField,
+    FieldList,
+    FormField,
+    SubmitField,
+    TextAreaField,
+    IntegerField,
+)
 from wtforms.validators import DataRequired, URL, Optional, Length, NumberRange
 
 from app.modules.dataset.models import PublicationType
@@ -28,7 +36,9 @@ class FeatureModelForm(FlaskForm):
     desc = TextAreaField("Description", validators=[Optional()])
     publication_type = SelectField(
         "Publication type",
-        choices=[(pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType],
+        choices=[
+            (pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType
+        ],
         validators=[Optional()],
     )
     publication_doi = StringField("Publication DOI", validators=[Optional(), URL()])
@@ -59,7 +69,9 @@ class DataSetForm(FlaskForm):
     desc = TextAreaField("Description", validators=[DataRequired()])
     publication_type = SelectField(
         "Publication type",
-        choices=[(pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType],
+        choices=[
+            (pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType
+        ],
         validators=[DataRequired()],
     )
     publication_doi = StringField("Publication DOI", validators=[Optional(), URL()])
@@ -72,7 +84,9 @@ class DataSetForm(FlaskForm):
 
     def get_dsmetadata(self):
 
-        publication_type_converted = self.convert_publication_type(self.publication_type.data)
+        publication_type_converted = self.convert_publication_type(
+            self.publication_type.data
+        )
 
         return {
             "title": self.title.data,
@@ -98,6 +112,11 @@ class DataSetForm(FlaskForm):
 
 class RateForm(FlaskForm):
     rate = IntegerField(
-        'Rate', validators=[DataRequired(), NumberRange(min=0, max=10, message="Rate must be between 0 and 10")])
-    comment = StringField('Comment', validators=[DataRequired(), Length(max=256)])
-    submit = SubmitField('Save rate')
+        "Rate",
+        validators=[
+            DataRequired(),
+            NumberRange(min=0, max=10, message="Rate must be between 0 and 10"),
+        ],
+    )
+    comment = StringField("Comment", validators=[DataRequired(), Length(max=256)])
+    submit = SubmitField("Save rate")

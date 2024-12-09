@@ -4,6 +4,7 @@ from app.modules.dataset.services import DataSetService
 from app.modules.dataset.models import DataSet
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.hubfile.models import Hubfile
+
 # import tempfile
 # import os
 # from zipfile import ZipFile
@@ -81,12 +82,15 @@ def test_get_hubfile_by_uvl_filename(mock_dataset_service, mock_dataset_with_fil
         mock_dataset_service.get_hubfile_by_uvl_filename(1, "non_existent_file.uvl")
 
 
-@mock.patch('app.modules.dataset.services.DataSetService.convert_to_glencoe')
-@mock.patch('app.modules.dataset.services.DataSetService.convert_to_splot')
-@mock.patch('app.modules.dataset.services.DataSetService.convert_to_cnf')
+@mock.patch("app.modules.dataset.services.DataSetService.convert_to_glencoe")
+@mock.patch("app.modules.dataset.services.DataSetService.convert_to_splot")
+@mock.patch("app.modules.dataset.services.DataSetService.convert_to_cnf")
 def test_convert_and_add_to_zip(
-    mock_convert_cnf, mock_convert_splot, mock_convert_glencoe,
-    mock_dataset_service, mock_dataset_with_files
+    mock_convert_cnf,
+    mock_convert_splot,
+    mock_convert_glencoe,
+    mock_dataset_service,
+    mock_dataset_with_files,
 ):
     """Prueba para convert_and_add_to_zip"""
 
@@ -96,25 +100,33 @@ def test_convert_and_add_to_zip(
     with mock.patch("zipfile.ZipFile") as mock_zip:
         mock_zip.return_value.__enter__.return_value = mock.MagicMock()
         mock_dataset_service.convert_and_add_to_zip(
-            mock_zip.return_value.__enter__.return_value, 1, "file1.uvl", "dataset_1")
+            mock_zip.return_value.__enter__.return_value, 1, "file1.uvl", "dataset_1"
+        )
 
         mock_convert_glencoe.assert_called_once()
         mock_convert_splot.assert_called_once()
         mock_convert_cnf.assert_called_once()
 
 
-@pytest.mark.parametrize("conversion_type, method", [
-    ("glencoe", "convert_to_glencoe"),
-    ("splot", "convert_to_splot"),
-    ("cnf", "convert_to_cnf")
-])
+@pytest.mark.parametrize(
+    "conversion_type, method",
+    [
+        ("glencoe", "convert_to_glencoe"),
+        ("splot", "convert_to_splot"),
+        ("cnf", "convert_to_cnf"),
+    ],
+)
 def test_convert_uvl_to_format(mock_dataset_service, conversion_type, method):
     """Prueba para convertir el archivo UVL a diferentes formatos"""
 
     mock_dataset_service.get_hubfile_by_uvl_filename = mock.Mock()
-    mock_dataset_service.get_hubfile_by_uvl_filename.return_value.get_path.return_value = "/mock/path/to/uvl"
+    mock_dataset_service.get_hubfile_by_uvl_filename.return_value.get_path.return_value = (
+        "/mock/path/to/uvl"
+    )
 
     with mock.patch.object(mock_dataset_service, method) as mock_conversion:
-        mock_dataset_service.convert_uvl_to_format(1, "file1.uvl", conversion_type, "/mock/temp/file")
+        mock_dataset_service.convert_uvl_to_format(
+            1, "file1.uvl", conversion_type, "/mock/temp/file"
+        )
 
         mock_conversion.assert_called_once_with(1, "file1.uvl", "/mock/temp/file")
