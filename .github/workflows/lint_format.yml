@@ -42,7 +42,9 @@ jobs:
       - name: Push changes
         env:
           FORMATER_TOKEN: ${{ secrets.FORMATER_TOKEN }}
-        run: >
-          git remote set-url origin https://github.com/${{ github.repository }}.git
+        run: |
+          git remote set-url origin \
+            https://github.com/${{ github.repository }}.git
 
-          git push https://x-access-token:${{ secrets.FORMATER_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}          
+          git push https://x-access-token:${{ secrets.FORMATER_TOKEN }}@github.com/${{ github.repository }} \
+            HEAD:${{ github.ref_name }}
