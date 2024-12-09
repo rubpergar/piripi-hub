@@ -14,9 +14,9 @@ jobs:
         uses: actions/checkout@v2
       - name: Get user email from GitHub API
         id: get_user_email
-        run: >
-          email=$(curl -s https://api.github.com/users/${{ github.actor }} | jq -r
-          .email)
+        run: |
+          email=$(curl -s https://api.github.com/users/${{ github.actor }} | \
+          jq -r .email)
 
           echo "USER_EMAIL=$email" >> $GITHUB_ENV
       - name: Set up Python
