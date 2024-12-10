@@ -51,9 +51,6 @@ class LoginBehavior(TaskSet):
             print(f"Login failed: {response.status_code}")
 
 class PasswordRecoveryBehavior(TaskSet):
-    def on_start(self):
-        # Este método puede ser usado para configuraciones iniciales
-        self.recover_password()
 
     @task(1)
     def get_recover_password(self):
