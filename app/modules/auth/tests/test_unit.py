@@ -1,9 +1,13 @@
 import pytest
 from flask import url_for
+from unittest.mock import patch, MagicMock
+
 
 from app.modules.auth.services import AuthenticationService
 from app.modules.auth.repositories import UserRepository
 from app.modules.profile.repositories import UserProfileRepository
+from app.modules.profile.services import UserProfileService
+
 
 
 @pytest.fixture(scope="module")
@@ -117,3 +121,41 @@ def test_service_create_with_profile_fail_no_password(clean_database):
 
     assert UserRepository().count() == 0
     assert UserProfileRepository().count() == 0
+
+
+@pytest.fixture
+def mock_form():
+    """
+    Crea un formulario simulado que puedes manipular en diferentes escenarios.
+    """
+    form = MagicMock()
+    form.data = {"name": "Updated Name", "email": "updated@example.com"}
+    return form
+
+@pytest.fixture
+def mock_service():
+    """
+    Crea una instancia simulada del servicio con el método `update` mockeado.
+    """
+    service = UserProfileService()
+    service.update = MagicMock(return_value={"id": 1, "name": "Updated Name", "email": "updated@example.com"})
+    return service
+
+def test_update_profile_success(mock_service, mock_form):
+    mock_form.validate.return_value = True
+
+    result, errors = mock_service.update_profile(user_profile_id=1, form=mock_form)
+
+    mock_service.update.assert_called_once_with(1, **mock_form.data)
+    assert result == {"id": 1, "name": "Updated Name", "email": "updated@example.com"}
+    assert errors is None
+
+def test_update_profile_invalid_form(mock_service, mock_form):
+    mock_form.validate.return_value = False
+    mock_form.errors = {"email": ["Invalid email format"]}
+
+    result, errors = mock_service.update_profile(user_profile_id=1, form=mock_form)
+
+    mock_service.update.assert_not_called()
+    assert result is None
+    assert errors == {"email": ["Invalid email format"]}
