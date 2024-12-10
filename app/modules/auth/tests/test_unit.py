@@ -195,3 +195,59 @@ def test_get_authenticated_user_unauthenticated(mock_unauthenticated_user):
         result = service.get_authenticated_user()
 
     assert result is None
+
+
+@pytest.fixture
+def mock_authenticated_user_with_profile():
+    """
+    Simula un usuario autenticado con un perfil asociado.
+    """
+    user = MagicMock()
+    user.is_authenticated = True
+    user.profile = {"id": 1, "name": "John Doe"}
+    return user
+
+
+@pytest.fixture
+def mock_authenticated_user_without_profile():
+    """
+    Simula un usuario autenticado sin un perfil asociado.
+    """
+    user = MagicMock()
+    user.is_authenticated = True
+    user.profile = None
+    return user
+
+
+@pytest.fixture
+def mock_unauthenticated_user():
+    """
+    Simula un usuario no autenticado.
+    """
+    user = MagicMock()
+    user.is_authenticated = False
+    return user
+
+
+def test_get_authenticated_user_profile_with_profile(mock_authenticated_user_with_profile):
+    with patch("app.modules.auth.services.current_user", mock_authenticated_user_with_profile):
+        service = AuthenticationService()
+        result = service.get_authenticated_user_profile()
+
+    assert result == {"id": 1, "name": "John Doe"}
+
+
+def test_get_authenticated_user_profile_without_profile(mock_authenticated_user_without_profile):
+    with patch("app.modules.auth.services.current_user", mock_authenticated_user_without_profile):
+        service = AuthenticationService()
+        result = service.get_authenticated_user_profile()
+
+    assert result is None
+
+
+def test_get_authenticated_user_profile_unauthenticated(mock_unauthenticated_user):
+    with patch("app.modules.auth.services.current_user", mock_unauthenticated_user):
+        service = AuthenticationService()
+        result = service.get_authenticated_user_profile()
+
+    assert result is None
