@@ -21,7 +21,7 @@ class TestTestseleniumadvancedfiltering3():
   def test_testseleniumadvancedfiltering3(self):
     self.driver.get("http://127.0.0.1:5000/")
     self.driver.set_window_size(1840, 1048)
-    self.driver.find_element(By.LINK_TEXT, "Explore").click()
+    self.driver.get("http://127.0.0.1:5000/explore")
     self.driver.find_element(By.ID, "number_of_models").click()
     self.driver.find_element(By.ID, "number_of_models").send_keys("5")
     self.driver.find_element(By.ID, "number_of_models").send_keys(Keys.ENTER)

@@ -21,7 +21,7 @@ class TestTestseleniumadvancedfiltering1():
   def test_testseleniumadvancedfiltering1(self):
     self.driver.get("http://127.0.0.1:5000/")
     self.driver.set_window_size(1840, 1048)
-    self.driver.find_element(By.CSS_SELECTOR, ".sidebar-item:nth-child(3) .align-middle:nth-child(2)").click()
+    self.driver.get("http://127.0.0.1:5000/explore")
     self.driver.find_element(By.ID, "query").click()
     self.driver.find_element(By.ID, "query").send_keys("fff")
     self.driver.find_element(By.ID, "query").send_keys(Keys.ENTER)
