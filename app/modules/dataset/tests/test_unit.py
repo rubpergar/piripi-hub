@@ -117,7 +117,7 @@ def delete_folder(user, dataset):
 def test_download_all_datasets(test_client):
     user = create_user(email="test_user@example.com", password="password123")
     dataset = create_dataset(user_id=user.id)
-    response = test_client.get("/dataset/download_all")
+    response = test_client.get("/dataset/download/all")
 
     assert (
         response.status_code == 200

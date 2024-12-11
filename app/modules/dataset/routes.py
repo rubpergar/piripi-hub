@@ -192,16 +192,6 @@ def delete():
     return jsonify({"error": "Error: File not found"})
 
 
-@dataset_bp.route("/dataset/download/all", methods=["GET"])
-def download_all_dataset():
-    zip_path = dataset_service.zip_all_datasets()
-
-    # Asigna el nombre al zip
-    zip_filename = "all_datasets.zip"
-
-    return send_file(zip_path, as_attachment=True, download_name=zip_filename)
-
-
 @dataset_bp.route("/dataset/download/<int:dataset_id>", methods=["GET"])
 def download_dataset(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
@@ -404,17 +394,18 @@ def delete_rate(dataset_id, rate_id):
     return redirect(url_for("dataset.rate", dataset_id=dataset_id))
 
 
-@dataset_bp.route("/dataset/download_all", methods=["GET"])
+@dataset_bp.route("/dataset/download/all", methods=["GET"])
 def download_all_datasets():
-    datasets = dataset_service.get_all_datasets()
+    datasets = dataset_service.get_all()
     temp_dir = tempfile.mkdtemp()
     zip_path = os.path.join(temp_dir, "all_datasets.zip")
 
-    # Creamos los directorios para cada tipo de archivo
     uvl_dir = os.path.join(temp_dir, "uvl")
     cnf_dir = os.path.join(temp_dir, "cnf")
     splot_dir = os.path.join(temp_dir, "splot")
     glencoe_dir = os.path.join(temp_dir, "glencoe")
+    others_dir = os.path.join(temp_dir, "otros")
+    os.makedirs(others_dir, exist_ok=True)
 
     os.makedirs(uvl_dir, exist_ok=True)
     os.makedirs(cnf_dir, exist_ok=True)
@@ -430,12 +421,10 @@ def download_all_datasets():
                         full_path = os.path.join(subdir, file)
                         relative_path = os.path.relpath(full_path, file_path)
 
-                        # Identificamos la extensión del archivo
                         _, ext = os.path.splitext(file)
                         ext = ext.lower()
 
                         if ext == ".uvl":
-                            # Copiamos el archivo uvl a la carpeta uvl
                             uvl_file_path = os.path.join(uvl_dir, relative_path)
                             os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
                             shutil.copy(full_path, uvl_file_path)
@@ -443,22 +432,18 @@ def download_all_datasets():
                                 uvl_file_path,
                                 arcname=os.path.relpath(uvl_file_path, temp_dir),
                             )
-                            logging.debug(f"Archivo UVL agregado al zip: {relative_path}")
 
-                            # Obtenemos el ID del archivo UVL para las transformaciones
                             try:
                                 file_id = int(file.split(".")[0][4:])
                             except ValueError:
                                 logging.error(f"No se puede extraer el ID del archivo: {file}")
                                 continue
 
-                            # Transformaciones del archivo UVL
                             try:
                                 cnf_dataset = to_cnf(file_id, cnf_dir)
                                 splot_dataset = to_splot(file_id, splot_dir)
                                 glencoe_dataset = to_glencoe(file_id, glencoe_dir)
 
-                                # Agregamos los archivos transformados si existen
                                 for transformed_file in [cnf_dataset, splot_dataset, glencoe_dataset]:
                                     if os.path.exists(transformed_file):
                                         zipf.write(
@@ -469,10 +454,10 @@ def download_all_datasets():
                                 logging.error(f"No se ha podido transformar el archivo {file}: {e}")
                                 continue
                         else:
-                            # Si no es UVL (por si existen otros archivos), los podemos ignorar
-                            # o guardarlos en otra carpeta según se requiera.
-                            # Aquí simplemente los copiamos a la carpeta correspondiente a su extensión
-                            # si se desea. Ejemplo:
+                            # Si no es UVL (por si existen otros archivos)
+                            # lo guardarmos en otra carpeta.
+                            # Aquí simplemente los copiamos a la carpeta correspondiente a su extensión.
+                            # Ejemplo:
                             target_dir = None
                             if ext == ".cnf":
                                 target_dir = cnf_dir
@@ -481,8 +466,7 @@ def download_all_datasets():
                             elif ext == ".glencoe":
                                 target_dir = glencoe_dir
                             else:
-                                # Si es otro tipo de archivo, podríamos crear una carpeta "otros"
-                                # o simplemente ignorar.
+                                target_dir = others_dir
                                 continue
 
                             target_file_path = os.path.join(target_dir, relative_path)
@@ -492,7 +476,6 @@ def download_all_datasets():
                                 target_file_path,
                                 arcname=os.path.relpath(target_file_path, temp_dir),
                             )
-                            logging.debug(f"Archivo {ext} agregado al zip: {relative_path}")
 
 
         return send_file(
