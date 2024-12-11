@@ -27,6 +27,7 @@ class TestDownloadselected1():
         self.driver.find_element(By.LINK_TEXT, "Sample dataset 4").click()
         self.driver.find_element(By.CSS_SELECTOR, ".list-group-item:nth-child(3) .model-checkbox").click()
         self.driver.find_element(By.ID, "downloadSelectedButton").click()
+        time.sleep(4)
 
 
 class TestDownloadselected2():
@@ -46,6 +47,7 @@ class TestDownloadselected2():
         self.driver.find_element(By.CSS_SELECTOR, ".list-group-item:nth-child(2) .model-checkbox").click()
         self.driver.find_element(By.CSS_SELECTOR, ".list-group-item:nth-child(4) .model-checkbox").click()
         self.driver.find_element(By.ID, "downloadSelectedButton").click()
+        time.sleep(4)
 
 
 class TestDownloadselected0():
@@ -64,4 +66,5 @@ class TestDownloadselected0():
         self.driver.find_element(By.LINK_TEXT, "Sample dataset 1").click()
         self.driver.find_element(By.ID, "downloadSelectedButton").click()
         alert_text = self.driver.switch_to.alert.text
+        time.sleep(4)
         assert alert_text == "No files selected for download."
