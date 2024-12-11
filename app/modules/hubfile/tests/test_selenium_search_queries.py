@@ -64,6 +64,9 @@ class TestDownloadselected0():
     def test_downloadselected0(self):
         self.driver.get("http://127.0.0.1:5000/")
         self.driver.find_element(By.LINK_TEXT, "Sample dataset 1").click()
+        self.driver.find_element(By.CSS_SELECTOR, ".list-group-item:nth-child(2) .model-checkbox").click()
+        time.sleep(1)
+        self.driver.find_element(By.CSS_SELECTOR, ".list-group-item:nth-child(2) .model-checkbox").click()
         self.driver.find_element(By.ID, "downloadSelectedButton").click()
         alert_text = self.driver.switch_to.alert.text
         time.sleep(4)
