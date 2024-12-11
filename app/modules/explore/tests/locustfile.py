@@ -1,6 +1,4 @@
 from locust import HttpUser, task, between
-from random import choice
-from datetime import datetime
 import json
 
 
