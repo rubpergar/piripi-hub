@@ -9,7 +9,6 @@ from app.modules.profile.repositories import UserProfileRepository
 from app.modules.profile.services import UserProfileService
 
 
-
 @pytest.fixture(scope="module")
 def test_client(test_client):
     """
@@ -143,14 +142,18 @@ def mock_form():
     form.data = {"name": "Updated Name", "email": "updated@example.com"}
     return form
 
+
 @pytest.fixture
 def mock_service():
     """
     Crea una instancia simulada del servicio con el método `update` mockeado.
     """
     service = UserProfileService()
-    service.update = MagicMock(return_value={"id": 1, "name": "Updated Name", "email": "updated@example.com"})
+    service.update = MagicMock(
+        return_value={"id": 1, "name": "Updated Name", "email": "updated@example.com"}
+    )
     return service
+
 
 def test_update_profile_success(mock_service, mock_form):
     mock_form.validate.return_value = True
@@ -160,6 +163,7 @@ def test_update_profile_success(mock_service, mock_form):
     mock_service.update.assert_called_once_with(1, **mock_form.data)
     assert result == {"id": 1, "name": "Updated Name", "email": "updated@example.com"}
     assert errors is None
+
 
 def test_update_profile_invalid_form(mock_service, mock_form):
     mock_form.validate.return_value = False
@@ -229,16 +233,26 @@ def mock_authenticated_user_without_profile():
     user.profile = None
     return user
 
-def test_get_authenticated_user_profile_with_profile(mock_authenticated_user_with_profile):
-    with patch("app.modules.auth.services.current_user", mock_authenticated_user_with_profile):
+
+def test_get_authenticated_user_profile_with_profile(
+    mock_authenticated_user_with_profile,
+):
+    with patch(
+        "app.modules.auth.services.current_user", mock_authenticated_user_with_profile
+    ):
         service = AuthenticationService()
         result = service.get_authenticated_user_profile()
 
     assert result == {"id": 1, "name": "John Doe"}
 
 
-def test_get_authenticated_user_profile_without_profile(mock_authenticated_user_without_profile):
-    with patch("app.modules.auth.services.current_user", mock_authenticated_user_without_profile):
+def test_get_authenticated_user_profile_without_profile(
+    mock_authenticated_user_without_profile,
+):
+    with patch(
+        "app.modules.auth.services.current_user",
+        mock_authenticated_user_without_profile,
+    ):
         service = AuthenticationService()
         result = service.get_authenticated_user_profile()
 

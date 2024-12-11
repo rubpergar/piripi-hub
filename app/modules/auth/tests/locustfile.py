@@ -56,18 +56,19 @@ class LoginBehavior(TaskSet):
         if response.status_code != 200:
             print(f"Login failed: {response.status_code}")
 
+
 class PasswordRecoveryBehavior(TaskSet):
 
     @task(1)
     def get_recover_password(self):
         # Obtiene el formulario de recuperación de contraseña
-        response = self.client.get("/recover_password", name = "GET /recover_password")
+        response = self.client.get("/recover_password", name="GET /recover_password")
         if response.status_code != 200:
             print(f"Failed to load password recovery page: {response.status_code}")
             return
 
         # Obtiene el token CSRF del formulario
-        
+
     @task(2)
     def post_recover_password(self):
         response = self.client.get("/recover_password")
@@ -76,16 +77,18 @@ class PasswordRecoveryBehavior(TaskSet):
 
         # Envía la solicitud de recuperación de contraseña
         recovery_email = fake.email()
-        response = self.client.post("/recover_password", data={
-            "email": recovery_email,
-            "csrf_token": csrf_token
-        },name = "POST /recover_password" 
+        response = self.client.post(
+            "/recover_password",
+            data={"email": recovery_email, "csrf_token": csrf_token},
+            name="POST /recover_password",
         )
 
         if response.status_code == 200:
             print(f"Password recovery initiated for {recovery_email}")
         else:
-            print(f"Password recovery failed for {recovery_email}: {response.status_code}")
+            print(
+                f"Password recovery failed for {recovery_email}: {response.status_code}"
+            )
 
 
 class AuthUser(HttpUser):
