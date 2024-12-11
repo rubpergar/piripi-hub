@@ -21,7 +21,11 @@ from flask import (
     flash,
 )
 
-from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
+from flamapy.metamodels.fm_metamodel.transformations import (
+    UVLReader,
+    GlencoeWriter,
+    SPLOTWriter,
+)
 from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
 
 from app.modules.dataset.forms import DataSetForm
@@ -443,13 +447,17 @@ def download_all_datasets():
                                 uvl_file_path,
                                 arcname=os.path.relpath(uvl_file_path, temp_dir),
                             )
-                            logging.debug(f"Archivo UVL agregado al zip: {relative_path}")
+                            logging.debug(
+                                f"Archivo UVL agregado al zip: {relative_path}"
+                            )
 
                             # Obtenemos el ID del archivo UVL para las transformaciones
                             try:
                                 file_id = int(file.split(".")[0][4:])
                             except ValueError:
-                                logging.error(f"No se puede extraer el ID del archivo: {file}")
+                                logging.error(
+                                    f"No se puede extraer el ID del archivo: {file}"
+                                )
                                 continue
 
                             # Transformaciones del archivo UVL
@@ -459,14 +467,22 @@ def download_all_datasets():
                                 glencoe_dataset = to_glencoe(file_id, glencoe_dir)
 
                                 # Agregamos los archivos transformados si existen
-                                for transformed_file in [cnf_dataset, splot_dataset, glencoe_dataset]:
+                                for transformed_file in [
+                                    cnf_dataset,
+                                    splot_dataset,
+                                    glencoe_dataset,
+                                ]:
                                     if os.path.exists(transformed_file):
                                         zipf.write(
                                             transformed_file,
-                                            arcname=os.path.relpath(transformed_file, temp_dir),
+                                            arcname=os.path.relpath(
+                                                transformed_file, temp_dir
+                                            ),
                                         )
                             except Exception as e:
-                                logging.error(f"No se ha podido transformar el archivo {file}: {e}")
+                                logging.error(
+                                    f"No se ha podido transformar el archivo {file}: {e}"
+                                )
                                 continue
                         else:
                             # Si no es UVL (por si existen otros archivos), los podemos ignorar
@@ -486,14 +502,17 @@ def download_all_datasets():
                                 continue
 
                             target_file_path = os.path.join(target_dir, relative_path)
-                            os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
+                            os.makedirs(
+                                os.path.dirname(target_file_path), exist_ok=True
+                            )
                             shutil.copy(full_path, target_file_path)
                             zipf.write(
                                 target_file_path,
                                 arcname=os.path.relpath(target_file_path, temp_dir),
                             )
-                            logging.debug(f"Archivo {ext} agregado al zip: {relative_path}")
-
+                            logging.debug(
+                                f"Archivo {ext} agregado al zip: {relative_path}"
+                            )
 
         return send_file(
             zip_path,
