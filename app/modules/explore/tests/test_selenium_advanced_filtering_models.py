@@ -9,23 +9,23 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
-class TestTestseleniumadvancedfiltering3():
-  def setup_method(self, method):
-    self.driver = webdriver.Chrome()
-    self.vars = {}
-  
-  def teardown_method(self, method):
-    self.driver.quit()
-  
-  def test_testseleniumadvancedfiltering3(self):
-    self.driver.get("http://127.0.0.1:5000/")
-    self.driver.set_window_size(1840, 1048)
-    self.driver.get("http://127.0.0.1:5000/explore")
-    self.driver.find_element(By.ID, "number_of_models").click()
-    self.driver.find_element(By.ID, "number_of_models").send_keys("5")
-    self.driver.find_element(By.ID, "number_of_models").send_keys(Keys.ENTER)
-    self.driver.find_element(By.CSS_SELECTOR, ".row:nth-child(1) > .col-12").click()
-    self.driver.find_element(By.ID, "number_of_models").send_keys("7")
-    self.driver.find_element(By.ID, "number_of_models").send_keys(Keys.ENTER)
-    self.driver.find_element(By.ID, "clear-filters").click()
-  
+
+class TestTestseleniumadvancedfiltering3:
+    def setup_method(self, method):
+        self.driver = webdriver.Chrome()
+        self.vars = {}
+
+    def teardown_method(self, method):
+        self.driver.quit()
+
+    def test_testseleniumadvancedfiltering3(self):
+        self.driver.get("http://127.0.0.1:5000/")
+        self.driver.set_window_size(1840, 1048)
+        self.driver.get("http://127.0.0.1:5000/explore")
+        self.driver.find_element(By.ID, "number_of_models").click()
+        self.driver.find_element(By.ID, "number_of_models").send_keys("5")
+        self.driver.find_element(By.ID, "number_of_models").send_keys(Keys.ENTER)
+        self.driver.find_element(By.CSS_SELECTOR, ".row:nth-child(1) > .col-12").click()
+        self.driver.find_element(By.ID, "number_of_models").send_keys("7")
+        self.driver.find_element(By.ID, "number_of_models").send_keys(Keys.ENTER)
+        self.driver.find_element(By.ID, "clear-filters").click()
