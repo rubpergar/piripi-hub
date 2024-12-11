@@ -218,17 +218,6 @@ def mock_authenticated_user_without_profile():
     user.profile = None
     return user
 
-
-@pytest.fixture
-def mock_unauthenticated_user():
-    """
-    Simula un usuario no autenticado.
-    """
-    user = MagicMock()
-    user.is_authenticated = False
-    return user
-
-
 def test_get_authenticated_user_profile_with_profile(mock_authenticated_user_with_profile):
     with patch("app.modules.auth.services.current_user", mock_authenticated_user_with_profile):
         service = AuthenticationService()
