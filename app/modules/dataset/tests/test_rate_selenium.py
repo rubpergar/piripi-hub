@@ -4,7 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-class TestTestrateselenium():
+class TestTestrateselenium:
 
     def setup_method(self, method):
         self.driver = webdriver.Chrome()
