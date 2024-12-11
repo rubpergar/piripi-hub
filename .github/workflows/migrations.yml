@@ -17,10 +17,10 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: uvlhubdb_root_password
+          MYSQL_ROOT_PASSWORD: root_pwd
           MYSQL_DATABASE: uvlhubdb
-          MYSQL_USER: uvlhubdb_user
-          MYSQL_PASSWORD: uvlhubdb_password
+          MYSQL_USER: uvl_user
+          MYSQL_PASSWORD: user_pwd
         ports:
           - 3306:3306
         options: >
@@ -47,8 +47,8 @@ jobs:
         run: |
           until mysqladmin ping \
             -h 127.0.0.1 \
-            -u uvlhubdb_user \
-            -p uvlhubdb_password \
+            -u uvl_user \
+            -p user_pwd \
             --silent; do
             echo "Waiting for MySQL..."
             sleep 5
@@ -56,12 +56,11 @@ jobs:
 
       - name: Configure MySQL Databases
         run: |
-          mysql -h127.0.0.1 -uroot -puvlhubdb_root_password -e '
+          mysql -h127.0.0.1 -uroot -proot_pwd -e '
           DROP DATABASE IF EXISTS uvlhubdb;
           CREATE DATABASE uvlhubdb;
-          CREATE USER IF NOT EXISTS "uvlhubdb_user"@"%" 
-          IDENTIFIED BY "uvlhubdb_password";
-          GRANT ALL PRIVILEGES ON uvlhubdb.* TO "uvlhubdb_user"@"%";
+          CREATE USER IF NOT EXISTS "uvl_user"@"%" IDENTIFIED BY "user_pwd";
+          GRANT ALL PRIVILEGES ON uvlhubdb.* TO "uvl_user"@"%";
           FLUSH PRIVILEGES;'
 
       - name: Run Flask Migrations
@@ -72,8 +71,8 @@ jobs:
           MARIADB_HOSTNAME: 127.0.0.1
           MARIADB_PORT: 3306
           MARIADB_DATABASE: uvlhubdb
-          MARIADB_USER: uvlhubdb_user
-          MARIADB_PASSWORD: uvlhubdb_password
+          MARIADB_USER: uvl_user
+          MARIADB_PASSWORD: user_pwd
         run: |
           set -e
           flask db upgrade || true
