@@ -1,7 +1,7 @@
 services:
   web:
     container_name: web_app_container
-    image: drorganvidez/uvlhub:dev
+    image: piripi-hub
     env_file:
       - ../.env
     expose:
