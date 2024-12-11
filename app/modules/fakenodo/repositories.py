@@ -1,4 +1,4 @@
-from app.modules.fakenodo.models import Zenodo
+from app.modules.fakenodo.models import Fakenodo
 from core.repositories.BaseRepository import BaseRepository
 
 
