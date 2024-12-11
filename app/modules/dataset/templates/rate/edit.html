@@ -1,0 +1,24 @@
+{% extends "base_template.html" %}
+
+{% block title %}Edit Notepad{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Edit Your Rate</h2>
+    <form method="POST" action="{{ url_for('dataset.edit_ratedataset', dataset_id=dataset, rate_id=rate_id) }}">
+        {{ form.hidden_tag() }}
+        
+        <div class="mb-3">
+            <label for="rate" class="form-label">{{ form.rate.label }}</label>
+            {{ form.rate(class="form-control", size=32) }}
+        </div>
+        
+        <div class="mb-3">
+            <label for="comment" class="form-label">{{ form.comment.label }}</label>
+            {{ form.comment(class="form-control", rows=5) }}
+        </div>
+        
+        <button type="submit" class="btn btn-primary">{{ form.submit.value }} Edit</button>
+    </form>
+</div>
+{% endblock %}

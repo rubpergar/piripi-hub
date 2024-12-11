@@ -286,6 +286,10 @@
                             </div>
                             <div class="col-12 text-end" >
 
+                                <input type="checkbox" class="model-checkbox" onclick="updateSelectedCount()" data-file-id="{{ file.id }}"
+                                    style="margin-right: 5px; transform: scale(1.5); vertical-align: middle;">
+
+
                                 <button onclick="viewFile('{{ file.id }}')" class="btn btn-outline-secondary btn-sm" style="border-radius: 5px;">
                                     <i data-feather="eye"></i> View
                                 </button>
@@ -347,6 +351,16 @@
             <i data-feather="download" class="center-button-icon"></i>
             Download all ({{ dataset.get_file_total_size_for_human() }})
         </a>
+
+        <button id="downloadSelectedButton" class="btn btn-primary mt-3" style="border-radius: 5px;" onclick="downloadSelectedFiles()">
+            <i data-feather="download" class="center-button-icon"></i>
+            Download selected (<span id="selectedCount">0</span>)
+        </button>
+
+    </div>
+
+    <div>
+        <a href="{{url_for('dataset.rate',dataset_id=dataset.id)}}">Valoraciones</a>
     </div>
     
 </div>
@@ -509,6 +523,23 @@
             console.error('Failed to copy text: ', err);
         });
     }
+
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.model-checkbox:checked').length;
+        document.getElementById('selectedCount').textContent = selectedCount;
+    }
+
+    function downloadSelectedFiles() {
+        const selectedFiles = Array.from(document.querySelectorAll('.model-checkbox:checked'))
+            .map(checkbox => checkbox.getAttribute('data-file-id'));
+
+        if (selectedFiles.length > 0) {
+            window.location.href = `/dataset/download_selected?file_ids=${selectedFiles.join(',')}`;
+        } else {
+            alert("No files selected for download.");
+        }
+    }
+
 </script>
 
 {% endblock %}

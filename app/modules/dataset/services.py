@@ -4,9 +4,12 @@ import hashlib
 import shutil
 from typing import Optional
 import uuid
-
+import tempfile
+from zipfile import ZipFile
+from app.modules.hubfile.services import HubfileService
 from flask import request
-
+from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
+from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
 from app.modules.auth.services import AuthenticationService
 from app.modules.dataset.models import DSViewRecord, DataSet, DSMetaData
 from app.modules.dataset.repositories import (
@@ -15,7 +18,8 @@ from app.modules.dataset.repositories import (
     DSDownloadRecordRepository,
     DSMetaDataRepository,
     DSViewRecordRepository,
-    DataSetRepository
+    DataSetRepository,
+    RateRepository
 )
 from app.modules.featuremodel.repositories import FMMetaDataRepository, FeatureModelRepository
 from app.modules.hubfile.repositories import (
@@ -48,6 +52,7 @@ class DataSetService(BaseService):
         self.hubfilerepository = HubfileRepository()
         self.dsviewrecord_repostory = DSViewRecordRepository()
         self.hubfileviewrecord_repository = HubfileViewRecordRepository()
+        self.hubfile_service = HubfileService()
 
     def move_feature_models(self, dataset: DataSet):
         current_user = AuthenticationService().get_authenticated_user()
@@ -61,6 +66,9 @@ class DataSetService(BaseService):
         for feature_model in dataset.feature_models:
             uvl_filename = feature_model.fm_meta_data.uvl_filename
             shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
+
+    def is_synchronized(self, dataset_id: int) -> bool:
+        return self.repository.is_synchronized(dataset_id)
 
     def get_synchronized(self, current_user_id: int) -> DataSet:
         return self.repository.get_synchronized(current_user_id)
@@ -140,6 +148,103 @@ class DataSetService(BaseService):
         domain = os.getenv('DOMAIN', 'localhost')
         return f'http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}'
 
+    def zip_all_datasets(self) -> str:
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, "all_datasets.zip")
+
+        with ZipFile(zip_path, "w") as zipf:
+            for zz in os.listdir("uploads"):
+                user_path = os.path.join("uploads", zz)
+
+                if os.path.isdir(user_path) and zz.startswith("user_"):
+                    for dataset_dir in os.listdir(user_path):
+                        dataset_path = os.path.join(user_path, dataset_dir)
+
+                        if os.path.isdir(dataset_path) and dataset_dir.startswith("dataset_"):
+                            dataset_id = int(dataset_dir.split("_")[1])
+
+                            if self.is_synchronized(dataset_id):
+                                print(f"Adding dataset: {dataset_dir}")
+
+                                for subdir, dirs, files in os.walk(dataset_path):
+                                    for file in files:
+                                        full_path = os.path.join(subdir, file)
+                                        relative_path = os.path.relpath(full_path, dataset_path)
+
+                                        if file.endswith('.uvl'):
+
+                                            dataset_name = os.path.basename(dataset_dir)
+                                            print(f"Dataset name: {dataset_name}")
+                                            zipf.write(full_path, arcname=os.path.join(dataset_name, relative_path))
+
+                                            self.convert_and_add_to_zip(zipf, dataset_id, file, dataset_name)
+        return zip_path
+
+    def get_hubfile_by_uvl_filename(self, dataset_id, uvl_filename):
+        dataset = self.repository.get(dataset_id)
+
+        if not dataset:
+            raise FileNotFoundError(f"Dataset with ID {dataset_id} not found")
+
+        for feature_model in dataset.feature_models:
+            for file in feature_model.files:
+                if file.name == uvl_filename:
+                    return file
+
+        raise FileNotFoundError(f"UVL file {uvl_filename} not found in dataset {dataset_id}")
+
+    def convert_and_add_to_zip(self, zipf, dataset_id, uvl_filename, dataset_dir):
+        formats = ['glencoe', 'splot', 'cnf']
+        for conversion_type in formats:
+            self.add_converted_file_to_zip(zipf, dataset_id, uvl_filename, conversion_type, dataset_dir)
+
+    def add_converted_file_to_zip(self, zipf, dataset_id, uvl_filename, conversion_type, dataset_dir):
+        temp_file = tempfile.NamedTemporaryFile(suffix=f'.{conversion_type}', delete=False)
+        try:
+            if conversion_type == "glencoe":
+                self.convert_to_glencoe(dataset_id, uvl_filename, temp_file.name)
+            elif conversion_type == "splot":
+                self.convert_to_splot(dataset_id, uvl_filename, temp_file.name)
+            elif conversion_type == "cnf":
+                self.convert_to_cnf(dataset_id, uvl_filename, temp_file.name)
+
+            zipf.write(
+                temp_file.name,
+                arcname=os.path.join(
+                    dataset_dir,
+                    f"{os.path.splitext(uvl_filename)[0]}_{conversion_type}.txt"
+                )
+            )
+        finally:
+            os.remove(temp_file.name)
+
+    def convert_uvl_to_format(self, dataset_id, uvl_filename, conversion_type, temp_filename):
+        """Método que enruta la conversión del archivo UVL al formato adecuado."""
+        if conversion_type == "glencoe":
+            self.convert_to_glencoe(dataset_id, uvl_filename, temp_filename)
+        elif conversion_type == "splot":
+            self.convert_to_splot(dataset_id, uvl_filename, temp_filename)
+        elif conversion_type == "cnf":
+            self.convert_to_cnf(dataset_id, uvl_filename, temp_filename)
+        else:
+            raise ValueError(f"Unsupported conversion type: {conversion_type}")
+
+    def convert_to_glencoe(self, dataset_id, uvl_filename, temp_filename):
+        hubfile = self.get_hubfile_by_uvl_filename(dataset_id, uvl_filename)
+        fm = UVLReader(hubfile.get_path()).transform()
+        GlencoeWriter(temp_filename, fm).transform()
+
+    def convert_to_splot(self, dataset_id, uvl_filename, temp_filename):
+        hubfile = self.get_hubfile_by_uvl_filename(dataset_id, uvl_filename)
+        fm = UVLReader(hubfile.get_path()).transform()
+        SPLOTWriter(temp_filename, fm).transform()
+
+    def convert_to_cnf(self, dataset_id, uvl_filename, temp_filename):
+        hubfile = self.get_hubfile_by_uvl_filename(dataset_id, uvl_filename)
+        fm = UVLReader(hubfile.get_path()).transform()
+        sat = FmToPysat(fm).transform()
+        DimacsWriter(temp_filename, sat).transform()
+
 
 class AuthorService(BaseService):
     def __init__(self):
@@ -212,3 +317,11 @@ class SizeService():
             return f'{round(size / (1024 ** 2), 2)} MB'
         else:
             return f'{round(size / (1024 ** 3), 2)} GB'
+
+
+class RateDataSetService(BaseService):
+    def __init__(self):
+        self.repository = RateRepository()
+
+    def get_all_comments(self, dataset_id):
+        return self.repository.get_all_comments(dataset_id)
