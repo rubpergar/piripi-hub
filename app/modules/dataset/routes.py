@@ -467,7 +467,6 @@ def download_all_datasets():
                                 target_dir = glencoe_dir
                             else:
                                 target_dir = others_dir
-                                continue
 
                             target_file_path = os.path.join(target_dir, relative_path)
                             os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
