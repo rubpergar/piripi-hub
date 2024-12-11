@@ -139,7 +139,7 @@ class DataSetRepository(BaseRepository):
             .all()
         )
 
-    def get_all(self):
+    def get_all_datasets(self):
         return self.model.query.all()
 
 
