@@ -47,7 +47,7 @@ class AuthenticationService(BaseService):
             profile_data = {
                 "name": name,
                 "surname": surname,
-                "public_data": public_data
+                "public_data": public_data,
             }
 
             user = self.create(commit=False, **user_data)

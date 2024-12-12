@@ -63,7 +63,7 @@ def my_profile():
     )
 
 
-@profile_bp.route('/profile/<int:user_id>')
+@profile_bp.route("/profile/<int:user_id>")
 def view_profile(user_id):
     user = db.session.query(User).filter_by(id=user_id).first_or_404()
 
@@ -83,7 +83,7 @@ def view_profile(user_id):
                 .first()
             return render_template('dataset/view_dataset.html', dataset=dataset)
 
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
     per_page = 5
 
     user_datasets_pagination = (
