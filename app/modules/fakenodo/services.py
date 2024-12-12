@@ -1,18 +1,16 @@
 import logging
+import hashlib
 import os
-import requests
 
-from app.modules.dataset.models import DataSet
+from dotenv import load_dotenv
+from app.modules.fakenodo.repositories import DepositionRepo
+from app.modules.fakenodo.models import Deposition
+from app.modules.dataset.models import DataSet, DSMetaData
 from app.modules.featuremodel.models import FeatureModel
-from app.modules.fakenodo.repositories import FakenodoRepository
 
 from core.configuration.configuration import uploads_folder_name
-from dotenv import load_dotenv
-from flask import jsonify, Response
-from flask_login import current_user
-
-
 from core.services.BaseService import BaseService
+from flask_login import current_user
 
 logger = logging.getLogger(__name__)
 
@@ -20,137 +18,138 @@ load_dotenv()
 
 
 class FakenodoService(BaseService):
-
-    def get_fakenodo_url(self):
-
-        FLASK_ENV = os.getenv("FLASK_ENV", "development")
-        FAKENODO_API_URL = ""
-
-        if FLASK_ENV == "development":
-            FAKENODO_API_URL = os.getenv(
-                "FAKENODO_API_URL", "https://sandbox.fakenodo.org/api/deposit/depositions"
-            )
-        elif FLASK_ENV == "production":
-            FAKENODO_API_URL = os.getenv(
-                "FAKENODO_API_URL", "https://fakenodo.org/api/deposit/depositions"
-            )
-        else:
-            FAKENODO_API_URL = os.getenv(
-                "FAKENODO_API_URL", "https://sandbox.fakenodo.org/api/deposit/depositions"
-            )
-
-        return FAKENODO_API_URL
-
-    def get_fakenodo_access_token(self):
-        return os.getenv("FAKENODO_ACCESS_TOKEN")
-
     def __init__(self):
-        super().__init__(FakenodoRepository())
-        self.FAKENODO_ACCESS_TOKEN = self.get_fakenodo_access_token()
-        self.FAKENODO_API_URL = self.get_fakenodo_url()
-        self.headers = {"Content-Type": "application/json"}
-        self.params = {"access_token": self.FAKENODO_ACCESS_TOKEN}
+        self.deposition_repository = DepositionRepo()
 
-    def test_connection(self) -> bool:
+    def create_new_deposition(self, ds_meta_data: DSMetaData) -> dict:
         """
-        Test the connection with Fakenodo.
+        Create a new deposition in Fakenodo
+
+        Args:
+            dataset (Dataset): The dataset contain ing the necessary metadata
 
         Returns:
-            bool: True if the connection is successful, False otherwise.
-        """
-        response = requests.get(
-            self.FAKENODO_API_URL, params=self.params, headers=self.headers
-        )
-        return response.status_code == 200
-
-    def test_full_connection(self) -> Response:
-        """
-        Test the connection with Fakenodo by creating a deposition, uploading an empty test file, and deleting the
-        deposition.
-
-        Returns:
-            bool: True if the connection, upload, and deletion are successful, False otherwise.
+            dict: JSON format with the details of the deposition
         """
 
-        success = True
+        logger.info("Dataset sending to Fakenodo")
+        logger.info(f"Publication type: {ds_meta_data.publication_type.value}")
 
-        # Create a test file
-        working_dir = os.getenv("WORKING_DIR", "")
-        file_path = os.path.join(working_dir, "test_file.txt")
-        with open(file_path, "w") as f:
-            f.write("This is a test file with some content.")
-
-        messages = []  # List to store messages
-
-        # Step 1: Create a deposition on Fakenodo
-        data = {
-            "metadata": {
-                "title": "Test Deposition",
-                "upload_type": "dataset",
-                "description": "This is a test deposition created via Fakenodo API",
-                "creators": [{"name": "John Doe"}],
-            }
+        metadataJSON = {
+            "title": ds_meta_data.title,
+            "upload_type": "dataset" if ds_meta_data.publication_type.value == "none" else "publication",
+            "publication_type": (
+                ds_meta_data.publication_type.value
+                if ds_meta_data.publication_type.value != "none"
+                else None
+            ),
+            "description": ds_meta_data.description,
+            "creators": [
+                {
+                    "name": author.name,
+                    **({"affiliation": author.affiliation} if author.affiliation else {}),
+                    **({"orcid": author.orcid} if author.orcid else {}),
+                }
+                for author in ds_meta_data.authors
+            ],
+            "keywords": (
+                ["uvlhub"] if not ds_meta_data.tags else ds_meta_data.tags.split(", ") + ["uvlhub"]
+            ),
+            "access_right": "open",
+            "license": "CC-BY-4.0",
         }
 
-        response = requests.post(
-            self.FAKENODO_API_URL, json=data, params=self.params, headers=self.headers
-        )
+        try:
+            deposition = self.deposition_repository.create_new_deposition(dep_metadata=metadataJSON)
 
-        if response.status_code != 201:
-            return jsonify(
-                {
-                    "success": False,
-                    "messages": f"Failed to create test deposition on Fakenodo. Response code: {response.status_code}",
-                }
-            )
+            return {
+                "id": deposition.id,
+                "metadata": metadataJSON,
+                "message": "Deposition succesfully created in Fakenodo"
+            }
+        except Exception as error400:
+            raise Exception(f"Failed to create deposition in Fakenodo with error: {str(error400)}")
 
-        deposition_id = response.json()["id"]
-
-        # Step 2: Upload an empty file to the deposition
-        data = {"name": "test_file.txt"}
-        files = {"file": open(file_path, "rb")}
-        publish_url = f"{self.FAKENODO_API_URL}/{deposition_id}/files"
-        response = requests.post(
-            publish_url, params=self.params, data=data, files=files
-        )
-        files["file"].close()  # Close the file after uploading
-
-        logger.info(f"Publish URL: {publish_url}")
-        logger.info(f"Params: {self.params}")
-        logger.info(f"Data: {data}")
-        logger.info(f"Files: {files}")
-        logger.info(f"Response Status Code: {response.status_code}")
-        logger.info(f"Response Content: {response.content}")
-
-        if response.status_code != 201:
-            messages.append(
-                f"Failed to upload test file to Fakenodo. Response code: {response.status_code}"
-            )
-            success = False
-
-        # Step 3: Delete the deposition
-        response = requests.delete(
-            f"{self.FAKENODO_API_URL}/{deposition_id}", params=self.params
-        )
-
-        if os.path.exists(file_path):
-            os.remove(file_path)
-
-        return jsonify({"success": success, "messages": messages})
-
-    def get_all_depositions(self) -> dict:
+    def upload_file(self, dataset: DataSet, deposition_id: int, feature_model: FeatureModel, user=None):
         """
-        Get all depositions from Fakenodo.
+        Upload a file to a deposition in Fakenodo.
+
+        Args:
+            deposition_id (int): The ID of the deposition in Fakenodo.
+            feature_model (FeatureModel): The FeatureModel object representing the feature model.
+            user (FeatureModel): The User object representing the file owner.
 
         Returns:
-            dict: The response in JSON format with the depositions.
+            dict: The response in JSON format with the details of the uploaded file.
         """
-        response = requests.get(
-            self.FAKENODO_API_URL, params=self.params, headers=self.headers
-        )
-        if response.status_code != 200:
-            raise Exception("Failed to get depositions")
-        return response.json()
+
+        uvl_filename = feature_model.fm_meta_data.uvl_filename
+        user_id = current_user.id if user is None else user.id
+        file_path = os.path.join(uploads_folder_name(), f"user_{str(user_id)}", f"dataset_{dataset.id}/", uvl_filename)
+
+        request = {
+            "id": deposition_id,
+            "file": uvl_filename,
+            "fileSize": os.path.getsize(file_path),
+            "checksum": checksum(file_path),
+            "message": f"File Uploaded to deposition with id {deposition_id}"
+        }
+
+        return request
+
+    def publish_deposition(self, deposition_id: int) -> dict:
+        """
+        Publish a deposition in Fakenodo.
+
+        Args:
+            deposition_id (int): The ID of the deposition in Fakenodo.
+
+        Returns:
+            dict: The response in JSON format with the details of the published deposition.
+        """
+
+        deposition = Deposition.query.get(deposition_id)
+        if not deposition:
+            raise Exception("Error 404: Deposition not found")
+
+        try:
+            deposition.doi = f"fakenodo.doi.{deposition_id}"
+            deposition.status = "published"
+            self.deposition_repository.update(deposition)
+
+            response = {
+                "id": deposition_id,
+                "status": "published",
+                "conceptdoi": f"fakenodo.doi.{deposition_id}",
+                "message": "Deposition published successfully in fakenodo."
+            }
+            return response
+
+        except Exception as error:
+            raise Exception(f"Failed to publish deposition with errors: {str(error)}")
+
+    def get_deposition(self, deposition_id: int) -> dict:
+        """
+        Get a deposition from Fakenodo.
+
+        Args:
+            deposition_id (int): The ID of the deposition in Fakenodo.
+
+        Returns:
+            dict: The response in JSON format with the details of the deposition.
+        """
+        deposition = Deposition.query.get(deposition_id)
+        if not deposition:
+            raise Exception("Deposition not found")
+
+        response = {
+            "id": deposition.id,
+            "doi": deposition.doi,
+            "metadata": deposition.dep_metadata,
+            "status": deposition.status,
+            "message": "Deposition succesfully get from Fakenodo."
+        }
+        return response
 
     def get_doi(self, deposition_id: int) -> str:
         """
@@ -163,3 +162,15 @@ class FakenodoService(BaseService):
             str: The DOI of the deposition.
         """
         return self.get_deposition(deposition_id).get("doi")
+
+
+def checksum(fileName):
+    try:
+        with open(fileName, "rb") as file:
+            file_content = file.read()
+            res = hashlib.sha256(file_content).hexdigest()
+        return res
+    except FileNotFoundError:
+        raise Exception(f"File {fileName} not found for checksum calculation")
+    except Exception as e:
+        raise Exception(f"Error calculating checksum for file {fileName}: {str(e)}")
