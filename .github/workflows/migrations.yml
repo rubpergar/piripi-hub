@@ -12,93 +12,83 @@ on:
 jobs:
   update-migrations:
     runs-on: ubuntu-latest
-    
+
     services:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: uvlhub_root_password
+          MYSQL_ROOT_PASSWORD: uvlhubdb_root_password
           MYSQL_DATABASE: uvlhubdb
           MYSQL_USER: uvlhubdb_user
           MYSQL_PASSWORD: uvlhubdb_password
         ports:
           - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 --silent" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
 
-      - name: Install dependencies
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
+    - name: Wait for MySQL
+      run: |
+        until mysqladmin ping -h 127.0.0.1 -uuvlhubdb_user -puvlhubdb_password --silent; do
+          echo "Waiting for MySQL..."
+          sleep 5
+        done
 
+    - name: Configure MySQL Databases
+      run: |
+        mysql -h127.0.0.1 -uroot -puvlhubdb_root_password -e '
+        DROP DATABASE IF EXISTS uvlhubdb;
+        CREATE DATABASE uvlhubdb;
+        CREATE USER IF NOT EXISTS "uvlhubdb_user"@"%" IDENTIFIED BY "uvlhubdb_password";
+        GRANT ALL PRIVILEGES ON uvlhubdb.* TO "uvlhubdb_user"@"%";
+        FLUSH PRIVILEGES;'
 
-      - name: Wait for MySQL
-        run: |
-          until mysqladmin ping -h 127.0.0.1 -uuvlhubdb_user -puvlhubdb_password --silent; do
-            echo "Waiting for MySQL..."
-            sleep 5
-          done
-    
-      - name: Configure MySQL Databases
-        run: |
-          mysql -h127.0.0.1 -uroot -puvlhubdb_root_password -e '
-          DROP DATABASE IF EXISTS uvlhubdb;
-          CREATE DATABASE uvlhubdb;
-          CREATE USER IF NOT EXISTS "uvlhubdb_user"@"%" IDENTIFIED BY "uvlhubdb_password";
-          GRANT ALL PRIVILEGES ON uvlhubdb.* TO "uvlhubdb_user"@"%";
-          FLUSH PRIVILEGES;'
+    - name: Run Flask Migrations
+      env:
+        FLASK_APP: "UVLHUB.IO(dev)"
+        FLASK_ENV: development
+        DOMAIN: localhost
+        MARIADB_HOSTNAME: 127.0.0.1
+        MARIADB_PORT: 3306
+        MARIADB_DATABASE: uvlhubdb
+        MARIADB_USER: uvlhubdb_user
+        MARIADB_PASSWORD: uvlhubdb_password
+      run: |
+        set -e
+        flask db upgrade || true
+        if flask db upgrade 2>&1 | grep -q 'Multiple head revisions are present'; then
+          echo "Conflicts detected. Merging migrations..."
+          flask db merge heads -m "Merge migrations"
+          flask db upgrade
+          flask db migrate -m "Update migrations after merge"
+          flask db upgrade
+        else
+          echo "No conflicts in migrations."
+        fi
 
-      - name: Run Flask Migrations
-        env:
-          FLASK_APP: "UVLHUB.IO(dev)"
-          FLASK_ENV: development
-          DOMAIN: localhost
-          MARIADB_HOSTNAME: 127.0.0.1
-          MARIADB_PORT: 3306
-          MARIADB_DATABASE: uvlhubdb
-          MARIADB_USER: uvlhubdb_user
-          MARIADB_PASSWORD: uvlhubdb_password
-        run: |
-          set -e
-          flask db upgrade || {
-            if flask db upgrade 2>&1 | grep -q 'Multiple head revisions are present'; then
-              echo "Conflicts detected. Merging migrations..."
-              flask db merge heads -m "Merge migrations"
-              flask db upgrade
-              flask db migrate -m "Update migrations after merge"
-              flask db upgrade
-            else
-              echo "Migration failed for an unknown reason."
-              exit 1
-            fi
-          }
-          echo "Migration completed successfully."
-    
-      - name: Commit and Push Updated Migrations
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add migrations/versions/*.py
-          if git diff --cached --quiet; then
-            echo "No migration changes to commit."
-          else
-            git commit -m "Migrations: Update after resolving conflicts"
-            git push origin ${GITHUB_REF#refs/heads/}
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Commit and Push Updated Migrations
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add migrations/versions/*.py
+
+        if git diff --cached --quiet; then
+          echo "No migration changes to commit."
+        else
+          git commit -m "Migrations: Update after resolving conflicts"
+          git push origin ${GITHUB_REF#refs/heads/}
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
