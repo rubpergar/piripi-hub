@@ -12,12 +12,12 @@ on:
 jobs:
   update-migrations:
     runs-on: ubuntu-latest
-
+    
     services:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: uvlhubdb_root_password
+          MYSQL_ROOT_PASSWORD: uvlhub_root_password
           MYSQL_DATABASE: uvlhubdb
           MYSQL_USER: uvlhubdb_user
           MYSQL_PASSWORD: uvlhubdb_password
@@ -40,20 +40,20 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m venv venv
+          source venv/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+
+
       - name: Wait for MySQL
         run: |
-          until mysqladmin ping \
-            -h 127.0.0.1 \
-            -u uvlhubdb_user \
-            -p uvlhubdb_password \
-            --silent; do
+          until mysqladmin ping -h 127.0.0.1 -uuvlhubdb_user -puvlhubdb_password --silent; do
             echo "Waiting for MySQL..."
             sleep 5
           done
-
+    
       - name: Configure MySQL Databases
         run: |
           mysql -h127.0.0.1 -uroot -puvlhubdb_root_password -e '
@@ -75,25 +75,25 @@ jobs:
           MARIADB_PASSWORD: uvlhubdb_password
         run: |
           set -e
-          flask db upgrade || true
-          if flask db upgrade 2>&1 | \
-            grep -q 'Multiple head revisions are present'; then
-            echo "Conflicts detected. Merging migrations..."
-            flask db merge heads -m "Merge migrations"
-            flask db upgrade
-            flask db migrate -m "Update migrations after merge"
-            flask db upgrade
-          else
-            echo "No conflicts in migrations."
-          fi
-
+          flask db upgrade || {
+            if flask db upgrade 2>&1 | grep -q 'Multiple head revisions are present'; then
+              echo "Conflicts detected. Merging migrations..."
+              flask db merge heads -m "Merge migrations"
+              flask db upgrade
+              flask db migrate -m "Update migrations after merge"
+              flask db upgrade
+            else
+              echo "Migration failed for an unknown reason."
+              exit 1
+            fi
+          }
+          echo "Migration completed successfully."
+    
       - name: Commit and Push Updated Migrations
         run: |
           git config --global user.name "GitHub Actions"
-          git config --global user.email \
-            "github-actions[bot]@users.noreply.github.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add migrations/versions/*.py
-
           if git diff --cached --quiet; then
             echo "No migration changes to commit."
           else
