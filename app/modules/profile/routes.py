@@ -70,18 +70,18 @@ def view_profile(user_id):
     if current_user.is_authenticated:
         if not user.profile.public_data and current_user.id != user_id:
             flash("User data is not public", "error")
-            dataset = db.session.query(DataSet) \
-                .filter(DataSet.user_id == user_id) \
-                .first()
-            return render_template('dataset/view_dataset.html', dataset=dataset)
+            dataset = (
+                db.session.query(DataSet).filter(DataSet.user_id == user_id).first()
+            )
+            return render_template("dataset/view_dataset.html", dataset=dataset)
 
     else:
         if not user.profile.public_data:
             flash("User data is not public", "error")
-            dataset = db.session.query(DataSet) \
-                .filter(DataSet.user_id == user_id) \
-                .first()
-            return render_template('dataset/view_dataset.html', dataset=dataset)
+            dataset = (
+                db.session.query(DataSet).filter(DataSet.user_id == user_id).first()
+            )
+            return render_template("dataset/view_dataset.html", dataset=dataset)
 
     page = request.args.get("page", 1, type=int)
     per_page = 5
