@@ -18,17 +18,6 @@
 
 {% block content %}
 
-<div class="row mb-3">
-
-    <div class="col-6">
-        <a href="/explore" class="btn btn-primary btn-sm" id="search" style="border-radius: 5px;">
-            <i data-feather="search" class="center-button-icon"></i>
-            Explore more datasets
-        </a>
-    </div>
-
-</div>
-
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
@@ -45,6 +34,17 @@
         {% endfor %}
     {% endif %}
 {% endwith %}
+
+<div class="row mb-3">
+
+    <div class="col-6">
+        <a href="/explore" class="btn btn-primary btn-sm" id="search" style="border-radius: 5px;">
+            <i data-feather="search" class="center-button-icon"></i>
+            Explore more datasets
+        </a>
+    </div>
+
+</div>
 
 <div class="row">
 
