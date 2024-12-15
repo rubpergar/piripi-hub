@@ -130,7 +130,7 @@ var currentId = 0;
 
         window.onload = function () {
 
-            test_fakenodo_connection();
+            //test_fakenodo_connection();
 
             document.getElementById('upload_button').addEventListener('click', function () {
 
@@ -167,7 +167,6 @@ var currentId = 0;
                             formUploadData.set(key, formData[key]);
                         }
                     }
-                    let checked_doi = true;
                     if (formData.publication_doi) {
                         let publicationDoi = formData.publication_doi[0].trim();
                         if (publicationDoi !== '' && !/^10.\d{4}$/.test(publicationDoi)) {
