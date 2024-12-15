@@ -4,8 +4,6 @@ on:
   push:
     branches: 
      - docker
-     - main
-     - develop
 
 jobs:
   build-and-push:
