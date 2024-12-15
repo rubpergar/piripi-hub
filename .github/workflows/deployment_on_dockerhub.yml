@@ -24,9 +24,19 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
 
-      - name: Copy .env.docker.example to .env
+      - name: Create .env file
         run: |
-          cp .env.docker.example .env
+          echo "FLASK_APP_NAME=\"UVLHUB.IO(dev)\"" > .env
+          echo "FLASK_ENV=development" >> .env
+          echo "DOMAIN=localhost" >> .env
+          echo "MARIADB_HOSTNAME=db" >> .env
+          echo "MARIADB_PORT=3306" >> .env
+          echo "MARIADB_DATABASE=uvlhubdb" >> .env
+          echo "MARIADB_TEST_DATABASE=uvlhubdb_test" >> .env
+          echo "MARIADB_USER=uvlhubdb_user" >> .env
+          echo "MARIADB_PASSWORD=uvlhubdb_password" >> .env
+          echo "MARIADB_ROOT_PASSWORD=uvlhubdb_root_password" >> .env
+          echo "WORKING_DIR=/app/" >> .env
 
       - name: Build Docker image with latest tag
         run: |
