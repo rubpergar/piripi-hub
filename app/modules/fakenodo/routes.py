@@ -1,87 +1,44 @@
-from flask import jsonify
-from app.modules.fakenodo import fakenodo_bp
+from flask import jsonify, send_file, request
+from . import fakenodo_bp
+import tempfile
+import os
 
+datasets = {}
+dataset_counter = 0
 
-@fakenodo_bp.route('', methods=["GET"])
-def test_connection_fakenodo():
-    response = {"status": "success", "message": "Connected to FakenodoAPI"}
-    return jsonify(response)
-
-
-@fakenodo_bp.route('/deposit/depositions', methods=['POST'])
-def create_deposition():
-    return jsonify({
-        "id": 123456,
-        "links": {
-            "files": "/fakenodo/api/deposit/depositions/123456/files",
-            "publish": "/fakenodo/api/deposit/depositions/123456/actions/publish"
+@fakenodo_bp.route('/fakenodo/upload', methods=['POST'])
+def upload_dataset():
+    file = request.files['file']
+    if file:
+        global dataset_counter
+        dataset_id = dataset_counter
+        dataset_counter += 1
+        temp_dir = tempfile.mkdtemp()
+        file_path = os.path.join(temp_dir, file.filename)
+        file.save(file_path)
+        datasets[dataset_id] = {
+            'id': dataset_id,
+            'filename': file.filename,
+            'file_path': file_path
         }
-    }), 201
+        return jsonify({'id': dataset_id, 'filename': file.filename}), 201
+    return jsonify({'error': 'No file uploaded'}), 400
 
+@fakenodo_bp.route('/fakenodo/info/<dataset_id>', methods=['GET'])
+def get_Dataset(dataset_id):
+    dataset = datasets.get(dataset_id)
+    if dataset:
+        return send_file(dataset['file_path'], as_attachment=True, download_name=dataset['filename'])
+    return jsonify({'error': 'Dataset not found'}), 404
 
-@fakenodo_bp.route('/deposit/depositions/<depositionId>', methods=["DELETE"])
-def delete_deposition_fakenodo(depositionId):
-    response = {
-        "status": "success",
-        "message": f"Deposition {depositionId} deleted",
-    }
-    return jsonify(response), 200
-
-
-@fakenodo_bp.route('/deposit/depositions', methods=['GET'])
-def get_all_depositions():
-    fake_depositions = [
-        {
-            "id": 12345,
-            "title": "Fake Deposition 1",
-            "description": "Fake deposition",
-            "creators": [{"name": "John Doe"}],
-            "published": True
-        },
-        {
-            "id": 67890,
-            "title": "Fake Deposition 2",
-            "description": "Fake deposition",
-            "creators": [{"name": "Jane Smith"}],
-            "published": False
-        },
-    ]
-    return jsonify({"depositions": fake_depositions}), 200
-
-
-@fakenodo_bp.route('/deposit/depositions/<int:deposition_id>/files', methods=['POST'])
-def upload_file(deposition_id):
-    return jsonify({
-        "message": "File uploaded successfully"
-    }), 201
-
-
-@fakenodo_bp.route('/deposit/depositions/<int:deposition_id>/actions/publish', methods=['POST'])
-def publish_deposition(deposition_id):
-    return jsonify({
-        "id": deposition_id,
-        "doi": f"10.5072/fakenodo.{deposition_id}"
-    }), 202
-
-
-@fakenodo_bp.route('/deposit/depositions/<int:deposition_id>', methods=['GET'])
-def get_deposition(deposition_id):
-    return jsonify({
-        "id": deposition_id,
-        "metadata": {
-            "title": "Sample Deposition",
-            "upload_type": "publication",
-            "publication_type": "article",
-            "description": "Description",
-        },
-        "files": [
-            {"filename": "file1.txt", "filesize": 1024},
-            {"filename": "file2.pdf", "filesize": 2048}
-        ],
-        "published": True
-    }), 200
-
-
-@fakenodo_bp.route('/deposit/depositions/<int:deposition_id>/nonexistent', methods=['GET'])
-def deposition_not_found(deposition_id):
-    return jsonify({"message": "Deposition not found"}), 404
+@fakenodo_bp.route('/fakenodo/datasets', methods=['GET'])
+def list_datasets():
+    return jsonify(list(datasets.values()))
+    
+@fakenodo_bp.route('/fakenodo/dataset/<int:dataset_id>', methods=['DELETE'])
+def delete_dataset(dataset_id):
+    dataset = datasets.pop(dataset_id, None)
+    if dataset:
+        os.remove(dataset['file_path'])
+        return jsonify({'message': 'Dataset deleted'}), 200
+    return jsonify({'error': 'Dataset not found'}), 404
