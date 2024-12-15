@@ -78,9 +78,9 @@
 
                             <div class="col-lg-6 col-6">
                                 <div class="mb-3">
-                                    {{ form.publication_doi.label(class="form-label") }}
-                                    {{ form.publication_doi(class="form-control") }}
-                                    {% for error in form.publication_doi.errors %}
+                                    {{ form.dataset_doi.label(class="form-label") }}
+                                    {{ form.dataset_doi(class="form-control") }}
+                                    {% for error in form.dataset_doi.errors %}
                                         <span style="color: red;">{{ error }}</span>
                                     {% endfor %}
                                 </div>
@@ -397,8 +397,8 @@
                                                 </div>
                                                 <div class="col-lg-6 col-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="publication_doi">Publication DOI</label>
-                                                        <input class="form-control" name="feature_models-${formUniqueId}-publication_doi" type="text" value="">
+                                                        <label class="form-label" for="dataset_doi">Publication DOI</label>
+                                                        <input class="form-control" name="feature_models-${formUniqueId}-dataset_doi" type="text" value="">
                                                     </div>
                                                 </div>
                                                 <div class="col-6">
@@ -474,7 +474,7 @@
 
                 <div id="loading" style="display: none">
                     <img width="40px" src="{{ url_for("static", filename="gifs/loading.svg") }}"/>
-                    Uploading dataset, please wait...
+                    Go to "My datasets" to see your uploaded dataset
                 </div>
 
                 <div class="row">

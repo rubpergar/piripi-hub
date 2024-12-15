@@ -10,6 +10,7 @@ from flask import send_file
 from flask_login import login_required, current_user
 
 from flask import (
+    json,
     redirect,
     render_template,
     request,
@@ -20,6 +21,8 @@ from flask import (
     url_for,
     flash,
 )
+
+from core.configuration.configuration import USE_FAKENODO
 
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.forms import RateForm
@@ -34,6 +37,7 @@ from app.modules.dataset.services import (
     DOIMappingService,
     RateDataSetService,
 )
+from app.modules.fakenodo.services import FakenodoService
 from app.modules.zenodo.services import ZenodoService
 
 logger = logging.getLogger(__name__)
@@ -43,6 +47,7 @@ dataset_service = DataSetService()
 author_service = AuthorService()
 dsmetadata_service = DSMetaDataService()
 zenodo_service = ZenodoService()
+fakenodo_service = FakenodoService()
 doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
 rateDataset_service = RateDataSetService()
@@ -66,26 +71,27 @@ def create_dataset():
             )
             logger.info(f"Created dataset: {dataset}")
             dataset_service.move_feature_models(dataset)
+            if form.dataset_doi._value() == "":
+                logger.info("Dataset DOI field was left blank - untracking dataset...")
+                dataset_service.update_dsmetadata(dataset.id, dataset_doi=None)
+                
         except Exception as exc:
-            logger.exception(f"Exception while create dataset data in local {exc}")
-            return (
-                jsonify({"Exception while create dataset data in local: ": str(exc)}),
-                400,
-            )
+            logger.exception(f"Exception while create dataset data in local {exc}")            
+            return jsonify({"Exception while create dataset data in local: ": str(exc)}), 400
+            
 
-        # send dataset as deposition to Zenodo
-        data = {}
-        try:
-            zenodo_response_json = zenodo_service.create_new_deposition(dataset)
-            response_data = json.dumps(zenodo_response_json)
-            data = json.loads(response_data)
-        except Exception as exc:
-            data = {}
-            zenodo_response_json = {}
-            logger.exception(f"Exception while create dataset data in Zenodo {exc}")
-
-        if data.get("conceptrecid"):
-            deposition_id = data.get("id")
+        if form.dataset_doi._value() != "":
+            if USE_FAKENODO:
+                data = {}
+                try:
+                    fakenodo_response_json = fakenodo_service.create_new_deposition(dataset)
+                    response_data = json.dumps(fakenodo_response_json)
+                    data = json.loads(response_data)
+                except Exception as exc:
+                    data = {}
+                    fakenodo_response_json = {}
+                    logger.exception(f"Exception while create dataset data in Fakenodo {exc}")
+                deposition_id = data.get("id")
 
             # update dataset with deposition id in Zenodo
             dataset_service.update_dsmetadata(
@@ -117,8 +123,7 @@ def create_dataset():
         msg = "Everything works!"
         return jsonify({"message": msg}), 200
 
-    return render_template("dataset/upload_dataset.html", form=form)
-
+    return render_template("dataset/upload_dataset.html", form=form, use_fakenodo=USE_FAKENODO)
 
 @dataset_bp.route("/dataset/list", methods=["GET", "POST"])
 @login_required
