@@ -1,3 +1,4 @@
+from app.modules.auth.models import User
 import pytest
 from flask import url_for
 from unittest.mock import patch, MagicMock
@@ -91,7 +92,26 @@ def test_signup_user_successful(test_client):
         ),
         follow_redirects=True,
     )
-    assert response.request.path == url_for("public.index"), "Signup was unsuccessful"
+    assert response.request.path == url_for("public.index"), "Signup was successful"
+
+
+def test_signup_user_successful_public_data_true(test_client):
+    data = dict(
+        name="Foo2",
+        surname="Example2",
+        email="foo2@example.com",
+        password="foo1234",
+        public_data=True
+    )
+    response = test_client.post(
+        "/signup",
+        data=data,
+        follow_redirects=True,
+    )
+    assert response.request.path == url_for("public.index"), "Signup was successful"
+    AuthenticationService().create_with_profile(**data)
+    user = UserRepository().get_by_email("foo2@example.com")
+    assert user.profile.public_data is True
 
 
 def test_service_create_with_profie_success(clean_database):
