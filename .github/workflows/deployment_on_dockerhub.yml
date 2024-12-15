@@ -26,8 +26,8 @@ jobs:
 
       - name: Build Docker image with latest tag
         run: |
-          docker-compose -f docker/docker-compose.dev.yml up -d --build    
+          docker compose -f docker/docker-compose.dev.yml up -d --build    
 
       - name: Push Docker image to DockerHub
         run: |
-          docker-compose -f docker/docker-compose.dev.yml push soniiarm/piripi-hub:latest
+          docker compose -f docker/docker-compose.dev.yml push soniiarm/piripi-hub:latest
