@@ -24,19 +24,9 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
 
-
-      - name: Create .env file
+      - name: Copy .env.docker.example to .env
         run: |
-          echo "FLASK_APP_NAME=${{ secrets.FLASK_APP_NAME }}" > .env
-          echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" >> .env
-          echo "DOMAIN=${{ secrets.DOMAIN }}" >> .env
-          echo "MARIADB_HOSTNAME=${{ secrets.MARIADB_HOSTNAME }}" >> .env
-          echo "MARIADB_PORT=${{ secrets.MARIADB_PORT }}" >> .env
-          echo "MARIADB_DATABASE=${{ secrets.MARIADB_DATABASE }}" >> .env
-          echo "MARIADB_USER=${{ secrets.MARIADB_USER }}" >> .env
-          echo "MARIADB_PASSWORD=${{ secrets.MARIADB_PASSWORD }}" >> .env
-          echo "MARIADB_ROOT_PASSWORD=${{ secrets.MARIADB_ROOT_PASSWORD }}" >> .env
-          echo "WORKING_DIR=${{ secrets.WORKING_DIR }}" >> .env
+          cp .env.docker.example .env
 
       - name: Build Docker image with latest tag
         run: |
