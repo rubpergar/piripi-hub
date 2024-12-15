@@ -82,23 +82,29 @@ def create_dataset():
             if form.dataset_doi._value() == "":
                 logger.info("Dataset DOI field was left blank - untracking dataset...")
                 dataset_service.update_dsmetadata(dataset.id, dataset_doi=None)
-                
+
         except Exception as exc:
-            logger.exception(f"Exception while create dataset data in local {exc}")            
-            return jsonify({"Exception while create dataset data in local: ": str(exc)}), 400
-            
+            logger.exception(f"Exception while create dataset data in local {exc}")
+            return (
+                jsonify({"Exception while create dataset data in local: ": str(exc)}),
+                400,
+            )
 
         if form.dataset_doi._value() != "":
             if USE_FAKENODO:
                 data = {}
                 try:
-                    fakenodo_response_json = fakenodo_service.create_new_deposition(dataset)
+                    fakenodo_response_json = fakenodo_service.create_new_deposition(
+                        dataset
+                    )
                     response_data = json.dumps(fakenodo_response_json)
                     data = json.loads(response_data)
                 except Exception as exc:
                     data = {}
                     fakenodo_response_json = {}
-                    logger.exception(f"Exception while create dataset data in Fakenodo {exc}")
+                    logger.exception(
+                        f"Exception while create dataset data in Fakenodo {exc}"
+                    )
                 deposition_id = data.get("id")
 
             # update dataset with deposition id in Zenodo
@@ -131,7 +137,10 @@ def create_dataset():
         msg = "Everything works!"
         return jsonify({"message": msg}), 200
 
-    return render_template("dataset/upload_dataset.html", form=form, use_fakenodo=USE_FAKENODO)
+    return render_template(
+        "dataset/upload_dataset.html", form=form, use_fakenodo=USE_FAKENODO
+    )
+
 
 @dataset_bp.route("/dataset/list", methods=["GET", "POST"])
 @login_required

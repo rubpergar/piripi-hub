@@ -41,7 +41,7 @@ class FeatureModelForm(FlaskForm):
         ],
         validators=[Optional()],
     )
-    publication_doi = StringField("Publication DOI", validators=[Optional()])    
+    publication_doi = StringField("Publication DOI", validators=[Optional()])
     tags = StringField("Tags (separated by commas)")
     version = StringField("UVL Version")
     authors = FieldList(FormField(AuthorForm))
