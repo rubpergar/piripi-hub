@@ -24,9 +24,9 @@ jobs:
 
       - name: Build Docker image with tag
         run: |
-          docker build -t piripi-hub:latest -f ./docker/images/Dockerfile.dev .  
+          docker build -t soniiarm/piripi-hub:latest -f ./docker/images/Dockerfile.dev .  
 
       - name: Push Docker image to DockerHub
         run: |
-          docker push piripi-hub:latest      
+          docker push soniiarm/piripi-hub:latest      
 
