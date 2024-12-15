@@ -2,7 +2,7 @@ name: Python Lint and Format
 
 on:
   push:
-    branches: [main, develop, workflows, WI7-Fakenodo]
+    branches: [main, develop, workflows]
 
 jobs:
   lint_and_format:
