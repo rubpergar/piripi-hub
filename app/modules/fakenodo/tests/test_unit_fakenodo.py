@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from app.modules.fakenodo.services import FakenodoService
-from app.modules.fakenodo.models import Deposition
 
 
 @pytest.fixture

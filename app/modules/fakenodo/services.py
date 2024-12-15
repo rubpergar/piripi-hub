@@ -88,7 +88,7 @@ class FakenodoService(BaseService):
             "id": deposition_id,
             "file": uvl_filename,
             "fileSize": os.path.getsize(file_path),
-            "checksum": checksum(file_path),
+            "checksum": self.checksum(file_path),
             "message": f"File Uploaded to deposition with id {deposition_id}",
         }
         return request
@@ -127,7 +127,7 @@ class FakenodoService(BaseService):
     def get_doi(self, deposition_id: int) -> str:
         return self.get_deposition(deposition_id).get("doi")
 
-    def checksum(fileName):
+    def checksum(self, fileName):
         try:
             with open(fileName, "rb") as file:
                 file_content = file.read()

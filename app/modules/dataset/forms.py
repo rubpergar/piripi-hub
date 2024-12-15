@@ -8,7 +8,7 @@ from wtforms import (
     TextAreaField,
     IntegerField,
 )
-from wtforms.validators import DataRequired, URL, Optional, Length, NumberRange
+from wtforms.validators import DataRequired, Optional, Length, NumberRange
 
 from app.modules.dataset.models import PublicationType
 
