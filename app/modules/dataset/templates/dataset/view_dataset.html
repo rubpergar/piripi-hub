@@ -29,6 +29,23 @@
 
 </div>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <div class="alert alert-error" role="alert">
+                        <div class="alert-message">
+                            <h4 class="alert-heading"><i class="align-middle" data-feather="x-circle"></i> Error</h4>
+                            <p style="margin-bottom: 0px">{{ message }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
 <div class="row">
 
     <div class="col-xl-8 col-lg-12 col-md-12 col-sm-12">

@@ -23,6 +23,12 @@ from flask import (
 )
 
 from core.configuration.configuration import USE_FAKENODO
+from flamapy.metamodels.fm_metamodel.transformations import (
+    UVLReader,
+    GlencoeWriter,
+    SPLOTWriter,
+)
+from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
 
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.forms import RateForm
@@ -37,7 +43,9 @@ from app.modules.dataset.services import (
     DOIMappingService,
     RateDataSetService,
 )
+
 from app.modules.fakenodo.services import FakenodoService
+from app.modules.hubfile.services import HubfileService
 from app.modules.zenodo.services import ZenodoService
 
 logger = logging.getLogger(__name__)
@@ -403,3 +411,147 @@ def delete_rate(dataset_id, rate_id):
         flash("Error deleting rate", "error")
 
     return redirect(url_for("dataset.rate", dataset_id=dataset_id))
+
+
+@dataset_bp.route("/dataset/download_all", methods=["GET"])
+def download_all_datasets():
+    datasets = dataset_service.get_all_datasets()
+    temp_dir = tempfile.mkdtemp()
+    zip_path = os.path.join(temp_dir, "all_datasets.zip")
+
+    # Creamos los directorios para cada tipo de archivo
+    uvl_dir = os.path.join(temp_dir, "uvl")
+    cnf_dir = os.path.join(temp_dir, "cnf")
+    splot_dir = os.path.join(temp_dir, "splot")
+    glencoe_dir = os.path.join(temp_dir, "glencoe")
+
+    os.makedirs(uvl_dir, exist_ok=True)
+    os.makedirs(cnf_dir, exist_ok=True)
+    os.makedirs(splot_dir, exist_ok=True)
+    os.makedirs(glencoe_dir, exist_ok=True)
+
+    try:
+        with ZipFile(zip_path, "w") as zipf:
+            for dataset in datasets:
+                file_path = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
+                for subdir, dirs, files in os.walk(file_path):
+                    for file in files:
+                        full_path = os.path.join(subdir, file)
+                        relative_path = os.path.relpath(full_path, file_path)
+
+                        # Identificamos la extensión del archivo
+                        _, ext = os.path.splitext(file)
+                        ext = ext.lower()
+
+                        if ext == ".uvl":
+                            # Copiamos el archivo uvl a la carpeta uvl
+                            uvl_file_path = os.path.join(uvl_dir, relative_path)
+                            os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
+                            shutil.copy(full_path, uvl_file_path)
+                            zipf.write(
+                                uvl_file_path,
+                                arcname=os.path.relpath(uvl_file_path, temp_dir),
+                            )
+                            logging.debug(
+                                f"Archivo UVL agregado al zip: {relative_path}"
+                            )
+
+                            # Obtenemos el ID del archivo UVL para las transformaciones
+                            try:
+                                file_id = int(file.split(".")[0][4:])
+                            except ValueError:
+                                logging.error(
+                                    f"No se puede extraer el ID del archivo: {file}"
+                                )
+                                continue
+
+                            # Transformaciones del archivo UVL
+                            try:
+                                cnf_dataset = to_cnf(file_id, cnf_dir)
+                                splot_dataset = to_splot(file_id, splot_dir)
+                                glencoe_dataset = to_glencoe(file_id, glencoe_dir)
+
+                                # Agregamos los archivos transformados si existen
+                                for transformed_file in [
+                                    cnf_dataset,
+                                    splot_dataset,
+                                    glencoe_dataset,
+                                ]:
+                                    if os.path.exists(transformed_file):
+                                        zipf.write(
+                                            transformed_file,
+                                            arcname=os.path.relpath(
+                                                transformed_file, temp_dir
+                                            ),
+                                        )
+                            except Exception as e:
+                                logging.error(
+                                    f"No se ha podido transformar el archivo {file}: {e}"
+                                )
+                                continue
+                        else:
+                            # Si no es UVL (por si existen otros archivos), los podemos ignorar
+                            # o guardarlos en otra carpeta según se requiera.
+                            # Aquí simplemente los copiamos a la carpeta correspondiente a su extensión
+                            # si se desea. Ejemplo:
+                            target_dir = None
+                            if ext == ".cnf":
+                                target_dir = cnf_dir
+                            elif ext == ".splot":
+                                target_dir = splot_dir
+                            elif ext == ".glencoe":
+                                target_dir = glencoe_dir
+                            else:
+                                # Si es otro tipo de archivo, podríamos crear una carpeta "otros"
+                                # o simplemente ignorar.
+                                continue
+
+                            target_file_path = os.path.join(target_dir, relative_path)
+                            os.makedirs(
+                                os.path.dirname(target_file_path), exist_ok=True
+                            )
+                            shutil.copy(full_path, target_file_path)
+                            zipf.write(
+                                target_file_path,
+                                arcname=os.path.relpath(target_file_path, temp_dir),
+                            )
+                            logging.debug(
+                                f"Archivo {ext} agregado al zip: {relative_path}"
+                            )
+
+        return send_file(
+            zip_path,
+            as_attachment=True,
+            mimetype="application/zip",
+            download_name="all_datasets.zip",
+        )
+    finally:
+        shutil.rmtree(temp_dir)
+
+
+def to_glencoe(file_id, glencoe_dir):
+    hubfile = HubfileService().get_by_id(file_id)
+    model = UVLReader(hubfile.get_path()).transform()
+    glencoe_file_name = f"{hubfile.name}_glencoe.txt"
+    glencoe_full_path = os.path.join(glencoe_dir, glencoe_file_name)
+    GlencoeWriter(glencoe_full_path, model).transform()
+    return glencoe_full_path
+
+
+def to_splot(file_id, splot_dir):
+    hubfile = HubfileService().get_by_id(file_id)
+    model = UVLReader(hubfile.get_path()).transform()
+    splot_file_name = f"{hubfile.name}_splot.txt"
+    splot_full_path = os.path.join(splot_dir, splot_file_name)
+    SPLOTWriter(splot_full_path, model).transform()
+    return splot_full_path
+
+
+def to_cnf(file_id, cnf_dir):
+    hubfile = HubfileService().get_by_id(file_id)
+    model = UVLReader(hubfile.get_path()).transform()
+    sat = FmToPysat(model).transform()
+    cnf_file_name = f"{hubfile.name}_cnf.txt"
+    cnf_full_path = os.path.join(cnf_dir, cnf_file_name)
+    DimacsWriter(cnf_full_path, sat).transform()
+    return cnf_full_path

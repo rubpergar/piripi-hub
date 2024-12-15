@@ -90,6 +90,14 @@
 
                 </div>
 
+                <div class="row form-group mt-3">
+                    <div class="col-6">
+                        {{ form.public_data.label(class="form-check-label") }}
+                        {% set public_data_checked = form.public_data.data if form.public_data.data else current_user.profile.public_data %}
+                        {{ form.public_data(class="form-check-input", checked=public_data_checked) }}
+                    </div>
+                </div>
+
                 <div class="row form-group">
 
                     <div class="col-12 mt-3">
