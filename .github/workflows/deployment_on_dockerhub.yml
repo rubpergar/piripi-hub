@@ -22,7 +22,7 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
 
-      - name: Build Docker image with tag
+      - name: Build Docker image with latest tag
         run: |
           docker build -t soniiarm/piripi-hub:latest -f ./docker/images/Dockerfile.dev .  
 
