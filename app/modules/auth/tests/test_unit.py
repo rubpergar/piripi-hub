@@ -1,4 +1,3 @@
-from app.modules.auth.models import User
 import pytest
 from flask import url_for
 from unittest.mock import patch, MagicMock
@@ -152,6 +151,8 @@ def test_service_create_with_profile_fail_no_password(clean_database):
     assert UserRepository().count() == 0
     assert UserProfileRepository().count() == 0
 
+# Public data attribute added to validate
+
 
 @pytest.fixture
 def mock_form():
@@ -159,7 +160,7 @@ def mock_form():
     Crea un formulario simulado que puedes manipular en diferentes escenarios.
     """
     form = MagicMock()
-    form.data = {"name": "Updated Name", "email": "updated@example.com"}
+    form.data = {"name": "Updated Name", "email": "updated@example.com", "public_data": True}
     return form
 
 
@@ -170,7 +171,7 @@ def mock_service():
     """
     service = UserProfileService()
     service.update = MagicMock(
-        return_value={"id": 1, "name": "Updated Name", "email": "updated@example.com"}
+        return_value={"id": 1, "name": "Updated Name", "email": "updated@example.com", "public_data": True}
     )
     return service
 
@@ -181,7 +182,7 @@ def test_update_profile_success(mock_service, mock_form):
     result, errors = mock_service.update_profile(user_profile_id=1, form=mock_form)
 
     mock_service.update.assert_called_once_with(1, **mock_form.data)
-    assert result == {"id": 1, "name": "Updated Name", "email": "updated@example.com"}
+    assert result == {"id": 1, "name": "Updated Name", "email": "updated@example.com", "public_data": True}
     assert errors is None
 
 
