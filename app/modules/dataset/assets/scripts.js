@@ -130,7 +130,7 @@ var currentId = 0;
 
         window.onload = function () {
 
-            //test_zenodo_connection();
+            test_fakenodo_connection();
 
             document.getElementById('upload_button').addEventListener('click', function () {
 
@@ -173,7 +173,6 @@ var currentId = 0;
                         if (publicationDoi !== '' && !/^10.\d{4}$/.test(publicationDoi)) {
                             hide_loading();
                             write_upload_error("Invalid DOI format. Please enter a valid DOI like 10.xxxx");
-                            checked_doi = false;
                         }
                     }
 
