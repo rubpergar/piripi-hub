@@ -9,6 +9,8 @@ from app.modules.profile import profile_bp
 from app.modules.profile.forms import UserProfileForm
 from app.modules.profile.services import UserProfileService
 
+# Routes for profile module
+
 
 @profile_bp.route("/profile/edit", methods=["GET", "POST"])
 @login_required
