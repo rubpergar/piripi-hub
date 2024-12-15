@@ -44,4 +44,4 @@ jobs:
 
       - name: Push Docker image to DockerHub
         run: |
-          docker compose -f docker/docker-compose.dev.yml push soniiarm/piripi-hub:latest
+          docker compose -f docker/docker-compose.dev.yml push web
