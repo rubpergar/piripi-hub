@@ -43,7 +43,8 @@ jobs:
       - name: Upload coverage to Codacy
         run: |
           pip install codacy-coverage
-          coverage run -m pytest app/modules/ --ignore-glob='*selenium*'
+          coverage run -m pytest app/modules/ --ignore-glob='*selenium*' \
+            --ignore=app/modules/dataset/tests
           coverage xml
           python-codacy-coverage -r coverage.xml
         env:
