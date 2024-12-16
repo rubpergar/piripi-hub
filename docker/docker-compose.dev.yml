@@ -14,7 +14,11 @@ services:
     volumes:
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "sh", "-c", "sh /app/docker/entrypoints/development_entrypoint.sh" ]
+    command:
+      - sh
+      - -c
+      - sh /app/docker/entrypoints/development_entrypoint.sh
+
     networks:
       - uvlhub_network
 

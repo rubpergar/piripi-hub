@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Regex para verificar el formato de Conventional Commits
+conventional_regex="^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert|wip)(\(.+\))?: .{1,50}"
+
+# Regex para permitir commits que comiencen con "Merge branch"
+merge_regex="^Merge branch"
+
+# Leer el mensaje del commit
+commit_message=$(cat "$1")
+
+# Validar el mensaje contra los regex
+if ! echo "$commit_message" | grep -Eq "$conventional_regex" && ! echo "$commit_message" | grep -Eq "$merge_regex"; then
+  echo "Error: El mensaje del commit no cumple con el formato de Conventional Commits ni comienza con 'Merge branch'."
+  echo "Formato esperado: tipo(scope?): mensaje (Ejemplo: feat(api): add new endpoint)"
+  echo "O mensajes de merge como: 'Merge branch ...'"
+  exit 1  # Salir con error para evitar que se realice el commit
+fi

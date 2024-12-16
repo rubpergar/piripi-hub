@@ -20,7 +20,7 @@ services:
       - ../uploads:/app/uploads
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
+    command: ["sh", "-c", "sh /app/entrypoint.sh"]
 
   db:
     container_name: mariadb_container
