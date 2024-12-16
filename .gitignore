@@ -1,7 +1,6 @@
 .env
 __pycache__/
 .idea
-uploads/
 app.log
 .DS_Store
 rosemary.egg-info/
