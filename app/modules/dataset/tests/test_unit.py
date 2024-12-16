@@ -245,7 +245,24 @@ def test_to_glencoe_parsing(test_client):
     os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
     with open(uvl_file_path, "w") as f:
         f.write(
-            'features\n    Chat\n        mandatory\n            Connection\n                alternative\n                    "Peer 2 Peer"\n                    Server\n            Messages\n                or\n                    Text\n                    Video\n                    Audio\n        optional\n            "Data Storage"\n            "Media Player"\n\nconstraints\n    Server => "Data Storage"\n    Video | Audio => "Media Player"\n'
+            'features\n'
+            '    Chat\n'
+            '        mandatory\n'
+            '            Connection\n'
+            '                alternative\n'
+            '                    "Peer 2 Peer"\n'
+            '                    Server\n'
+            '            Messages\n'
+            '                or\n'
+            '                    Text\n'
+            '                    Video\n'
+            '                    Audio\n'
+            '        optional\n'
+            '            "Data Storage"\n'
+            '            "Media Player"\n\n'
+            'constraints\n'
+            '    Server => "Data Storage"\n'
+            '    Video | Audio => "Media Player"\n'
         )
 
     hubfile = create_hubfile(
@@ -261,6 +278,7 @@ def test_to_glencoe_parsing(test_client):
 
     try:
         result = to_glencoe(file_id=hubfile.id, glencoe_dir=temp_dir)
+        result
 
         glencoe_file_path = os.path.join(temp_dir, f"{hubfile.name}_glencoe.txt")
 
@@ -269,6 +287,7 @@ def test_to_glencoe_parsing(test_client):
 
         try:
             glencoe_data = json.loads(glencoe_content)
+            glencoe_data
         except json.JSONDecodeError:
             assert False, "El contenido del archivo .glencoe no es un JSON válido."
 
@@ -293,7 +312,24 @@ def test_to_splot_parsing(test_client):
     os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
     with open(uvl_file_path, "w") as f:
         f.write(
-            'features\n    Chat\n        mandatory\n            Connection\n                alternative\n                    "Peer 2 Peer"\n                    Server\n            Messages\n                or\n                    Text\n                    Video\n                    Audio\n        optional\n            "Data Storage"\n            "Media Player"\n\nconstraints\n    Server => "Data Storage"\n    Video | Audio => "Media Player"\n'
+            'features\n'
+            '    Chat\n'
+            '        mandatory\n'
+            '            Connection\n'
+            '                alternative\n'
+            '                    "Peer 2 Peer"\n'
+            '                    Server\n'
+            '            Messages\n'
+            '                or\n'
+            '                    Text\n'
+            '                    Video\n'
+            '                    Audio\n'
+            '        optional\n'
+            '            "Data Storage"\n'
+            '            "Media Player"\n\n'
+            'constraints\n'
+            '    Server => "Data Storage"\n'
+            '    Video | Audio => "Media Player"\n'
         )
 
     hubfile = create_hubfile(
@@ -309,7 +345,7 @@ def test_to_splot_parsing(test_client):
 
     try:
         result = to_splot(file_id=hubfile.id, splot_dir=temp_dir)
-
+        result
         splot_file_path = os.path.join(temp_dir, f"{hubfile.name}_splot.txt")
         assert os.path.exists(splot_file_path), "El archivo .splot.txt no fue creado."
 
@@ -364,7 +400,24 @@ def test_to_cnf_parsing(test_client):
     os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
     with open(uvl_file_path, "w") as f:
         f.write(
-            'features\n    Chat\n        mandatory\n            Connection\n                alternative\n                    "Peer 2 Peer"\n                    Server\n            Messages\n                or\n                    Text\n                    Video\n                    Audio\n        optional\n            "Data Storage"\n            "Media Player"\n\nconstraints\n    Server => "Data Storage"\n    Video | Audio => "Media Player"\n'
+            'features\n'
+            '    Chat\n'
+            '        mandatory\n'
+            '            Connection\n'
+            '                alternative\n'
+            '                    "Peer 2 Peer"\n'
+            '                    Server\n'
+            '            Messages\n'
+            '                or\n'
+            '                    Text\n'
+            '                    Video\n'
+            '                    Audio\n'
+            '        optional\n'
+            '            "Data Storage"\n'
+            '            "Media Player"\n\n'
+            'constraints\n'
+            '    Server => "Data Storage"\n'
+            '    Video | Audio => "Media Player"\n'
         )
 
     hubfile = create_hubfile(
@@ -380,7 +433,7 @@ def test_to_cnf_parsing(test_client):
 
     try:
         result = to_cnf(file_id=hubfile.id, cnf_dir=temp_dir)
-
+        result
         cnf_file_path = os.path.join(temp_dir, f"{hubfile.name}_cnf.txt")
         assert os.path.exists(cnf_file_path), "El archivo .cnf no fue creado."
 
