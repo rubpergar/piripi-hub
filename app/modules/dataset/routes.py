@@ -21,7 +21,11 @@ from flask import (
     flash,
 )
 
-from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
+from flamapy.metamodels.fm_metamodel.transformations import (
+    UVLReader,
+    GlencoeWriter,
+    SPLOTWriter,
+)
 from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
 
 from app.modules.dataset.forms import DataSetForm
@@ -436,7 +440,9 @@ def download_all_datasets():
                             try:
                                 file_id = int(file.split(".")[0][4:])
                             except ValueError:
-                                logging.error(f"No se puede extraer el ID del archivo: {file}")
+                                logging.error(
+                                    f"No se puede extraer el ID del archivo: {file}"
+                                )
                                 continue
 
                             try:
@@ -448,10 +454,14 @@ def download_all_datasets():
                                     if os.path.exists(transformed_file):
                                         zipf.write(
                                             transformed_file,
-                                            arcname=os.path.relpath(transformed_file, temp_dir),
+                                            arcname=os.path.relpath(
+                                                transformed_file, temp_dir
+                                            ),
                                         )
                             except Exception as e:
-                                logging.error(f"No se ha podido transformar el archivo {file}: {e}")
+                                logging.error(
+                                    f"No se ha podido transformar el archivo {file}: {e}"
+                                )
                                 continue
                         else:
                             # Si no es UVL (por si existen otros archivos)
@@ -469,13 +479,14 @@ def download_all_datasets():
                                 target_dir = others_dir
 
                             target_file_path = os.path.join(target_dir, relative_path)
-                            os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
+                            os.makedirs(
+                                os.path.dirname(target_file_path), exist_ok=True
+                            )
                             shutil.copy(full_path, target_file_path)
                             zipf.write(
                                 target_file_path,
                                 arcname=os.path.relpath(target_file_path, temp_dir),
                             )
-
 
         return send_file(
             zip_path,

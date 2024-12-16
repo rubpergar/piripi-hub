@@ -31,6 +31,7 @@ class AuthenticationService(BaseService):
             password = kwargs.pop("password", None)
             name = kwargs.pop("name", None)
             surname = kwargs.pop("surname", None)
+            public_data = kwargs.pop("public_data", None)
 
             if not email:
                 raise ValueError("Email is required.")
@@ -46,6 +47,7 @@ class AuthenticationService(BaseService):
             profile_data = {
                 "name": name,
                 "surname": surname,
+                "public_data": public_data,
             }
 
             user = self.create(commit=False, **user_data)
