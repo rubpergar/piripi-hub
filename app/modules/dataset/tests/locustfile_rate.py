@@ -1,5 +1,5 @@
 from locust import HttpUser, task, between, SequentialTaskSet
-import random
+import secrets
 from core.environment.host import get_host_for_locust_testing
 
 
@@ -21,8 +21,8 @@ class DatasetTasks(SequentialTaskSet):
             print(f"Login failed: {response.status_code}")
         dataset_id = 2
         data = {
-            "rate": random.randint(1, 10),
-            "comment": f"Comentario generado por Locust {random.randint(1000, 9999)}",
+            "rate": secrets.randbelow(10) + 1,  # Usando secrets para un número aleatorio seguro
+            "comment": f"Comentario generado por Locust {secrets.randbelow(9000) + 1000}",  # Seguro
         }
         print(f"Creando una calificación para el dataset {dataset_id}...")
         response = self.client.post(f"/ratedataset/create/{dataset_id}", json=data)
@@ -35,10 +35,10 @@ class DatasetTasks(SequentialTaskSet):
     def edit_rate(self):
         """Simula la edición de una calificación existente"""
         dataset_id = 2
-        rate_id = random.randint(1, 100)
+        rate_id = secrets.randbelow(100) + 1  # Usando secrets para un número aleatorio seguro
         data = {
-            "rate": random.randint(1, 10),
-            "comment": f"Comentario editado por Locust {random.randint(1000, 9999)}",
+            "rate": secrets.randbelow(10) + 1,  # Seguro
+            "comment": f"Comentario editado por Locust {secrets.randbelow(9000) + 1000}",  # Seguro
         }
         print(f"Editando la calificación {rate_id} para el dataset {dataset_id}...")
         response = self.client.post(
@@ -53,7 +53,7 @@ class DatasetTasks(SequentialTaskSet):
     def delete_rate(self):
         """Simula la eliminación de una calificación"""
         dataset_id = 2
-        rate_id = random.randint(1, 100)
+        rate_id = secrets.randbelow(100) + 1  # Usando secrets para un número aleatorio seguro
         print(f"Eliminando la calificación {rate_id} para el dataset {dataset_id}...")
         response = self.client.post(f"/ratedataset/delete/{dataset_id}/{rate_id}")
         if response.status_code == 200:
