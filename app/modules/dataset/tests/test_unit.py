@@ -245,22 +245,22 @@ def test_to_glencoe_parsing(test_client):
     os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
     with open(uvl_file_path, "w") as f:
         f.write(
-            'features\n'
-            '    Chat\n'
-            '        mandatory\n'
-            '            Connection\n'
-            '                alternative\n'
+            "features\n"
+            "    Chat\n"
+            "        mandatory\n"
+            "            Connection\n"
+            "                alternative\n"
             '                    "Peer 2 Peer"\n'
-            '                    Server\n'
-            '            Messages\n'
-            '                or\n'
-            '                    Text\n'
-            '                    Video\n'
-            '                    Audio\n'
-            '        optional\n'
+            "                    Server\n"
+            "            Messages\n"
+            "                or\n"
+            "                    Text\n"
+            "                    Video\n"
+            "                    Audio\n"
+            "        optional\n"
             '            "Data Storage"\n'
             '            "Media Player"\n\n'
-            'constraints\n'
+            "constraints\n"
             '    Server => "Data Storage"\n'
             '    Video | Audio => "Media Player"\n'
         )
@@ -312,22 +312,22 @@ def test_to_splot_parsing(test_client):
     os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
     with open(uvl_file_path, "w") as f:
         f.write(
-            'features\n'
-            '    Chat\n'
-            '        mandatory\n'
-            '            Connection\n'
-            '                alternative\n'
+            "features\n"
+            "    Chat\n"
+            "        mandatory\n"
+            "            Connection\n"
+            "                alternative\n"
             '                    "Peer 2 Peer"\n'
-            '                    Server\n'
-            '            Messages\n'
-            '                or\n'
-            '                    Text\n'
-            '                    Video\n'
-            '                    Audio\n'
-            '        optional\n'
+            "                    Server\n"
+            "            Messages\n"
+            "                or\n"
+            "                    Text\n"
+            "                    Video\n"
+            "                    Audio\n"
+            "        optional\n"
             '            "Data Storage"\n'
             '            "Media Player"\n\n'
-            'constraints\n'
+            "constraints\n"
             '    Server => "Data Storage"\n'
             '    Video | Audio => "Media Player"\n'
         )
@@ -400,22 +400,22 @@ def test_to_cnf_parsing(test_client):
     os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
     with open(uvl_file_path, "w") as f:
         f.write(
-            'features\n'
-            '    Chat\n'
-            '        mandatory\n'
-            '            Connection\n'
-            '                alternative\n'
+            "features\n"
+            "    Chat\n"
+            "        mandatory\n"
+            "            Connection\n"
+            "                alternative\n"
             '                    "Peer 2 Peer"\n'
-            '                    Server\n'
-            '            Messages\n'
-            '                or\n'
-            '                    Text\n'
-            '                    Video\n'
-            '                    Audio\n'
-            '        optional\n'
+            "                    Server\n"
+            "            Messages\n"
+            "                or\n"
+            "                    Text\n"
+            "                    Video\n"
+            "                    Audio\n"
+            "        optional\n"
             '            "Data Storage"\n'
             '            "Media Player"\n\n'
-            'constraints\n'
+            "constraints\n"
             '    Server => "Data Storage"\n'
             '    Video | Audio => "Media Player"\n'
         )
