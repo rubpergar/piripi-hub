@@ -7,7 +7,12 @@ from selenium.webdriver.common.by import By
 
 
 def generate_random_email():
-    return ''.join(secrets.choice(string.ascii_lowercase + string.digits) for i in range(10)) + "@example.com"
+    return (
+        "".join(
+            secrets.choice(string.ascii_lowercase + string.digits) for i in range(10)
+        )
+        + "@example.com"
+    )
 
 
 class TestPublicdata:
@@ -34,7 +39,9 @@ class TestPublicdata:
         self.driver.find_element(By.LINK_TEXT, "Doe, Jane").click()
         time.sleep(2)
         alert_heading = self.driver.find_element(By.CLASS_NAME, "alert-heading")
-        alert_message = self.driver.find_element(By.CSS_SELECTOR, "p[style='margin-bottom: 0px']")
+        alert_message = self.driver.find_element(
+            By.CSS_SELECTOR, "p[style='margin-bottom: 0px']"
+        )
         assert "Error" in alert_heading.text
         assert alert_message.text == "User data is not public"
         time.sleep(2)

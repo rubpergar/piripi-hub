@@ -29,11 +29,15 @@ def test_client(test_client):
         db.session.add(profile)
         db.session.commit()
 
-        profile1 = UserProfile(user_id=user_test1.id, name="Name1", surname="Surname1", public_data=True)
+        profile1 = UserProfile(
+            user_id=user_test1.id, name="Name1", surname="Surname1", public_data=True
+        )
         db.session.add(profile1)
         db.session.commit()
 
-        profile2 = UserProfile(user_id=user_test2.id, name="Name2", surname="Surname2", public_data=False)
+        profile2 = UserProfile(
+            user_id=user_test2.id, name="Name2", surname="Surname2", public_data=False
+        )
         db.session.add(profile2)
         db.session.commit()
 
