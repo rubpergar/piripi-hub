@@ -21,7 +21,8 @@ class DatasetTasks(SequentialTaskSet):
             print(f"Login failed: {response.status_code}")
         dataset_id = 2
         data = {
-            "rate": secrets.randbelow(10) + 1,  # Usando secrets para un número aleatorio seguro
+            "rate": secrets.randbelow(10)
+            + 1,  # Usando secrets para un número aleatorio seguro
             "comment": f"Comentario generado por Locust {secrets.randbelow(9000) + 1000}",  # Seguro
         }
         print(f"Creando una calificación para el dataset {dataset_id}...")
@@ -35,7 +36,9 @@ class DatasetTasks(SequentialTaskSet):
     def edit_rate(self):
         """Simula la edición de una calificación existente"""
         dataset_id = 2
-        rate_id = secrets.randbelow(100) + 1  # Usando secrets para un número aleatorio seguro
+        rate_id = (
+            secrets.randbelow(100) + 1
+        )  # Usando secrets para un número aleatorio seguro
         data = {
             "rate": secrets.randbelow(10) + 1,  # Seguro
             "comment": f"Comentario editado por Locust {secrets.randbelow(9000) + 1000}",  # Seguro
@@ -53,7 +56,9 @@ class DatasetTasks(SequentialTaskSet):
     def delete_rate(self):
         """Simula la eliminación de una calificación"""
         dataset_id = 2
-        rate_id = secrets.randbelow(100) + 1  # Usando secrets para un número aleatorio seguro
+        rate_id = (
+            secrets.randbelow(100) + 1
+        )  # Usando secrets para un número aleatorio seguro
         print(f"Eliminando la calificación {rate_id} para el dataset {dataset_id}...")
         response = self.client.post(f"/ratedataset/delete/{dataset_id}/{rate_id}")
         if response.status_code == 200:
