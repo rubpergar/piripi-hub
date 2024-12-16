@@ -91,7 +91,26 @@ def test_signup_user_successful(test_client):
         ),
         follow_redirects=True,
     )
-    assert response.request.path == url_for("public.index"), "Signup was unsuccessful"
+    assert response.request.path == url_for("public.index"), "Signup was successful"
+
+
+def test_signup_user_successful_public_data_true(test_client):
+    data = dict(
+        name="Foo2",
+        surname="Example2",
+        email="foo2@example.com",
+        password="foo1234",
+        public_data=True
+    )
+    response = test_client.post(
+        "/signup",
+        data=data,
+        follow_redirects=True,
+    )
+    assert response.request.path == url_for("public.index"), "Signup was successful"
+    AuthenticationService().create_with_profile(**data)
+    user = UserRepository().get_by_email("foo2@example.com")
+    assert user.profile.public_data is True
 
 
 def test_service_create_with_profie_success(clean_database):
@@ -132,6 +151,8 @@ def test_service_create_with_profile_fail_no_password(clean_database):
     assert UserRepository().count() == 0
     assert UserProfileRepository().count() == 0
 
+# Public data attribute added to validate
+
 
 @pytest.fixture
 def mock_form():
@@ -139,7 +160,7 @@ def mock_form():
     Crea un formulario simulado que puedes manipular en diferentes escenarios.
     """
     form = MagicMock()
-    form.data = {"name": "Updated Name", "email": "updated@example.com"}
+    form.data = {"name": "Updated Name", "email": "updated@example.com", "public_data": True}
     return form
 
 
@@ -150,7 +171,7 @@ def mock_service():
     """
     service = UserProfileService()
     service.update = MagicMock(
-        return_value={"id": 1, "name": "Updated Name", "email": "updated@example.com"}
+        return_value={"id": 1, "name": "Updated Name", "email": "updated@example.com", "public_data": True}
     )
     return service
 
@@ -161,7 +182,7 @@ def test_update_profile_success(mock_service, mock_form):
     result, errors = mock_service.update_profile(user_profile_id=1, form=mock_form)
 
     mock_service.update.assert_called_once_with(1, **mock_form.data)
-    assert result == {"id": 1, "name": "Updated Name", "email": "updated@example.com"}
+    assert result == {"id": 1, "name": "Updated Name", "email": "updated@example.com", "public_data": True}
     assert errors is None
 
 
