@@ -15,12 +15,14 @@ from app.modules.dataset.models import (
 )
 from app.modules.dataset.routes import to_glencoe, to_splot, to_cnf
 
-'''
+"""
 -------------------------
 HELPERS
 -------------------------
 
-'''
+"""
+
+
 @pytest.fixture(scope="module")
 def test_client(test_client):
 
@@ -122,12 +124,14 @@ def delete_folder(user, dataset):
         )
 
 
-'''
+"""
 -------------------------
 FEATURE
 -------------------------
 
-'''
+"""
+
+
 def test_download_all_datasets(test_client):
     user = create_user(email="test_user@example.com", password="password123")
     dataset = create_dataset(user_id=user.id)
@@ -149,22 +153,28 @@ def test_download_all_datasets(test_client):
     delete_folder(user, dataset)
 
 
-'''
+"""
 -------------------------
 PARSING
 -------------------------
 
-'''
+"""
+
+
 @pytest.mark.parametrize(
     "file_type, expected_extension",
-    [("uvl", "_glencoe.txt"), ("txt", "_splot.txt"), ("xml", "_cnf.txt")]
+    [("uvl", "_glencoe.txt"), ("txt", "_splot.txt"), ("xml", "_cnf.txt")],
 )
 def test_file_conversion(test_client, file_type, expected_extension):
-    user = create_user(email=f"test_user_{file_type}_parsing@example.com", password="password123")
+    user = create_user(
+        email=f"test_user_{file_type}_parsing@example.com", password="password123"
+    )
     dataset = create_dataset(user_id=user.id)
     feature_model = create_feature_model(dataset.id)
 
-    hubfile = create_hubfile(f"file100.{file_type}", feature_model.id, user.id, dataset.id)
+    hubfile = create_hubfile(
+        f"file100.{file_type}", feature_model.id, user.id, dataset.id
+    )
 
     os.environ["WORKING_DIR"] = os.getcwd()
     temp_dir = "temp_files"
@@ -181,7 +191,9 @@ def test_file_conversion(test_client, file_type, expected_extension):
         expected_path = os.path.join(temp_dir, f"{hubfile.name}{expected_extension}")
 
         assert os.path.exists(result), "El archivo no fue creado correctamente."
-        assert result == expected_path, "La ruta del archivo transformado no es la esperada."
+        assert (
+            result == expected_path
+        ), "La ruta del archivo transformado no es la esperada."
 
     finally:
         shutil.rmtree(temp_dir)
@@ -191,6 +203,7 @@ def test_file_conversion(test_client, file_type, expected_extension):
     db.session.delete(user)
     db.session.commit()
     delete_folder(user, dataset)
+
 
 def test_other_file_extension(test_client):
     user = create_user(email="test_user_others@example.com", password="password123")
@@ -202,22 +215,29 @@ def test_other_file_extension(test_client):
 
     response = test_client.get("/dataset/download/all")
 
-    assert response.status_code == 200, "La solicitud para descargar todos los datasets falló."
+    assert (
+        response.status_code == 200
+    ), "La solicitud para descargar todos los datasets falló."
 
     # Usar BytesIO para tratar la respuesta como un archivo
     zip_data = io.BytesIO(response.data)
 
     with ZipFile(zip_data) as zipf:
         file_list = zipf.namelist()
-        assert any("otros/file100.txt" in file for file in file_list), "El archivo con extensión .txt no se encontró en la carpeta 'otros'."
+        assert any(
+            "otros/file100.txt" in file for file in file_list
+        ), "El archivo con extensión .txt no se encontró en la carpeta 'otros'."
 
     db.session.delete(dataset)
     db.session.delete(user)
     db.session.commit()
     delete_folder(user, dataset)
 
+
 def test_to_glencoe_parsing(test_client):
-    user = create_user(email="test_user_glencoe_parsing@example.com", password="password123")
+    user = create_user(
+        email="test_user_glencoe_parsing@example.com", password="password123"
+    )
     dataset = create_dataset(user_id=user.id)
     feature_model = create_feature_model(dataset_id=dataset.id)
 
@@ -263,7 +283,9 @@ def test_to_glencoe_parsing(test_client):
 
 
 def test_to_splot_parsing(test_client):
-    user = create_user(email="test_user_splot_parsing@example.com", password="password123")
+    user = create_user(
+        email="test_user_splot_parsing@example.com", password="password123"
+    )
     dataset = create_dataset(user_id=user.id)
     feature_model = create_feature_model(dataset_id=dataset.id)
 
@@ -317,7 +339,9 @@ def test_to_splot_parsing(test_client):
 </constraints>
 </feature_model>"""
 
-        assert expected_splot_content.strip() == splot_content.strip(), "El contenido del archivo .splot.txt no es el esperado."
+        assert (
+            expected_splot_content.strip() == splot_content.strip()
+        ), "El contenido del archivo .splot.txt no es el esperado."
 
     finally:
         shutil.rmtree(temp_dir)
@@ -328,8 +352,11 @@ def test_to_splot_parsing(test_client):
     db.session.commit()
     delete_folder(user, dataset)
 
+
 def test_to_cnf_parsing(test_client):
-    user = create_user(email="test_user_cnf_parsing@example.com", password="password123")
+    user = create_user(
+        email="test_user_cnf_parsing@example.com", password="password123"
+    )
     dataset = create_dataset(user_id=user.id)
     feature_model = create_feature_model(dataset_id=dataset.id)
 
@@ -390,7 +417,9 @@ c 10 "Media Player"
 -7 10 0
 -8 10 0"""
 
-        assert expected_cnf_content.strip() == cnf_content.strip(), "El contenido del archivo .cnf no es el esperado."
+        assert (
+            expected_cnf_content.strip() == cnf_content.strip()
+        ), "El contenido del archivo .cnf no es el esperado."
 
     finally:
         shutil.rmtree(temp_dir)

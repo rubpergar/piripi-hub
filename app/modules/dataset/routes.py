@@ -450,7 +450,11 @@ def download_all_datasets():
                                 splot_dataset = to_splot(file_id, splot_dir)
                                 glencoe_dataset = to_glencoe(file_id, glencoe_dir)
 
-                                for transformed_file in [cnf_dataset, splot_dataset, glencoe_dataset]:
+                                for transformed_file in [
+                                    cnf_dataset,
+                                    splot_dataset,
+                                    glencoe_dataset,
+                                ]:
                                     if os.path.exists(transformed_file):
                                         zipf.write(
                                             transformed_file,
