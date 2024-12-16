@@ -8,7 +8,7 @@ from wtforms import (
     TextAreaField,
     IntegerField,
 )
-from wtforms.validators import DataRequired, URL, Optional, Length, NumberRange
+from wtforms.validators import DataRequired, Optional, Length, NumberRange
 
 from app.modules.dataset.models import PublicationType
 
@@ -41,7 +41,7 @@ class FeatureModelForm(FlaskForm):
         ],
         validators=[Optional()],
     )
-    publication_doi = StringField("Publication DOI", validators=[Optional(), URL()])
+    publication_doi = StringField("Publication DOI", validators=[Optional()])
     tags = StringField("Tags (separated by commas)")
     version = StringField("UVL Version")
     authors = FieldList(FormField(AuthorForm))
@@ -74,8 +74,8 @@ class DataSetForm(FlaskForm):
         ],
         validators=[DataRequired()],
     )
-    publication_doi = StringField("Publication DOI", validators=[Optional(), URL()])
-    dataset_doi = StringField("Dataset DOI", validators=[Optional(), URL()])
+    publication_doi = StringField("Publication DOI", validators=[Optional()])
+    dataset_doi = StringField("Dataset DOI", validators=[Optional()])
     tags = StringField("Tags (separated by commas)")
     authors = FieldList(FormField(AuthorForm))
     feature_models = FieldList(FormField(FeatureModelForm), min_entries=1)
