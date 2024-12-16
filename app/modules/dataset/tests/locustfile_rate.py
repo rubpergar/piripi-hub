@@ -22,7 +22,7 @@ class DatasetTasks(SequentialTaskSet):
         dataset_id = 2
         data = {
             "rate": random.randint(1, 10),
-            "comment": f"Comentario generado por Locust {random.randint(1000, 9999)}"
+            "comment": f"Comentario generado por Locust {random.randint(1000, 9999)}",
         }
         print(f"Creando una calificación para el dataset {dataset_id}...")
         response = self.client.post(f"/ratedataset/create/{dataset_id}", json=data)
@@ -38,10 +38,12 @@ class DatasetTasks(SequentialTaskSet):
         rate_id = random.randint(1, 100)
         data = {
             "rate": random.randint(1, 10),
-            "comment": f"Comentario editado por Locust {random.randint(1000, 9999)}"
+            "comment": f"Comentario editado por Locust {random.randint(1000, 9999)}",
         }
         print(f"Editando la calificación {rate_id} para el dataset {dataset_id}...")
-        response = self.client.post(f"/ratedataset/edit/{dataset_id}/{rate_id}", json=data)
+        response = self.client.post(
+            f"/ratedataset/edit/{dataset_id}/{rate_id}", json=data
+        )
         if response.status_code == 200:
             print(f"Calificación {rate_id} editada correctamente.")
         else:
