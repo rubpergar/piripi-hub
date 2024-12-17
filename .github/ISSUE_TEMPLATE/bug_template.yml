@@ -1,0 +1,35 @@
+name: "Create an fix issue"
+description: "Report a problem that you find in order to ensure the quality of the project."
+title: "[fix] Brief description of the problem"
+labels: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # **🪲 Bug report**
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: "Bug description"
+      description: "Describe in detail the objective of the issue using imperative. Explain clearly what is the problem."
+      placeholder: "The button doesn't work."
+    validations:
+      required: true
+  - type: textarea
+    id: bug-steps
+    attributes:
+      label: "Steps to reproduce"
+      description: "Write the steps here (add or delete as many steps as necessary)."
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: bug-context
+    attributes:
+      label: "Additional context"
+      description: "Provide any additional details that may be helpful (optional)."
+    validations:
+      required: false
