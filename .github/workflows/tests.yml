@@ -79,13 +79,11 @@ jobs:
           sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get install -f -y
           google-chrome --version
 
-      - name: Install ChromeDriver
+      - name: Install Chromium and Chromium Driver
         run: |
-          CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
-          CHROMEDRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION)
-          wget https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/
+          sudo apt update
+          sudo apt install -y chromium-browser chromium-driver
+          chromium-browser --version
           chromedriver --version
 
       - name: Install Python dependencies
