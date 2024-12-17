@@ -85,15 +85,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -e ./
 
       - name: Set up ChromeDriver
         uses: nanasess/setup-chromedriver@42cc2998329f041de87dc3cfa33a930eacd57eaa
-
-      - name: Apply migrations and seeders
-        run: |
-          flask db upgrade
-          rosemary db:seed
 
       - name: Start Flask Application in Background
         env:
