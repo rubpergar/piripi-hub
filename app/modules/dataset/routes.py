@@ -21,6 +21,14 @@ from flask import (
     flash,
 )
 
+from core.configuration.configuration import USE_FAKENODO
+from flamapy.metamodels.fm_metamodel.transformations import (
+    UVLReader,
+    GlencoeWriter,
+    SPLOTWriter,
+)
+from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
+
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.forms import RateForm
 from app.modules.dataset.models import DSDownloadRecord
@@ -34,6 +42,9 @@ from app.modules.dataset.services import (
     DOIMappingService,
     RateDataSetService,
 )
+
+from app.modules.fakenodo.services import FakenodoService
+from app.modules.hubfile.services import HubfileService
 from app.modules.zenodo.services import ZenodoService
 
 logger = logging.getLogger(__name__)
@@ -43,6 +54,7 @@ dataset_service = DataSetService()
 author_service = AuthorService()
 dsmetadata_service = DSMetaDataService()
 zenodo_service = ZenodoService()
+fakenodo_service = FakenodoService()
 doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
 rateDataset_service = RateDataSetService()
@@ -66,6 +78,10 @@ def create_dataset():
             )
             logger.info(f"Created dataset: {dataset}")
             dataset_service.move_feature_models(dataset)
+            if form.dataset_doi._value() == "":
+                logger.info("Dataset DOI field was left blank - untracking dataset...")
+                dataset_service.update_dsmetadata(dataset.id, dataset_doi=None)
+
         except Exception as exc:
             logger.exception(f"Exception while create dataset data in local {exc}")
             return (
@@ -73,19 +89,22 @@ def create_dataset():
                 400,
             )
 
-        # send dataset as deposition to Zenodo
-        data = {}
-        try:
-            zenodo_response_json = zenodo_service.create_new_deposition(dataset)
-            response_data = json.dumps(zenodo_response_json)
-            data = json.loads(response_data)
-        except Exception as exc:
-            data = {}
-            zenodo_response_json = {}
-            logger.exception(f"Exception while create dataset data in Zenodo {exc}")
-
-        if data.get("conceptrecid"):
-            deposition_id = data.get("id")
+        if form.dataset_doi._value() != "":
+            if USE_FAKENODO:
+                data = {}
+                try:
+                    fakenodo_response_json = fakenodo_service.create_new_deposition(
+                        dataset
+                    )
+                    response_data = json.dumps(fakenodo_response_json)
+                    data = json.loads(response_data)
+                except Exception as exc:
+                    data = {}
+                    fakenodo_response_json = {}
+                    logger.exception(
+                        f"Exception while create dataset data in Fakenodo {exc}"
+                    )
+                deposition_id = data.get("id")
 
             # update dataset with deposition id in Zenodo
             dataset_service.update_dsmetadata(
@@ -117,7 +136,9 @@ def create_dataset():
         msg = "Everything works!"
         return jsonify({"message": msg}), 200
 
-    return render_template("dataset/upload_dataset.html", form=form)
+    return render_template(
+        "dataset/upload_dataset.html", form=form, use_fakenodo=USE_FAKENODO
+    )
 
 
 @dataset_bp.route("/dataset/list", methods=["GET", "POST"])
@@ -186,16 +207,6 @@ def delete():
         return jsonify({"message": "File deleted successfully"})
 
     return jsonify({"error": "Error: File not found"})
-
-
-@dataset_bp.route("/dataset/download/all", methods=["GET"])
-def download_all_dataset():
-    zip_path = dataset_service.zip_all_datasets()
-
-    # Asigna el nombre al zip
-    zip_filename = "all_datasets.zip"
-
-    return send_file(zip_path, as_attachment=True, download_name=zip_filename)
 
 
 @dataset_bp.route("/dataset/download/<int:dataset_id>", methods=["GET"])
@@ -398,3 +409,135 @@ def delete_rate(dataset_id, rate_id):
         flash("Error deleting rate", "error")
 
     return redirect(url_for("dataset.rate", dataset_id=dataset_id))
+
+
+@dataset_bp.route("/dataset/download/all", methods=["GET"])
+def download_all_datasets():
+    datasets = dataset_service.get_all()
+    temp_dir = tempfile.mkdtemp()
+    zip_path = os.path.join(temp_dir, "all_datasets.zip")
+
+    uvl_dir = os.path.join(temp_dir, "uvl")
+    cnf_dir = os.path.join(temp_dir, "cnf")
+    splot_dir = os.path.join(temp_dir, "splot")
+    glencoe_dir = os.path.join(temp_dir, "glencoe")
+    others_dir = os.path.join(temp_dir, "otros")
+    os.makedirs(others_dir, exist_ok=True)
+
+    os.makedirs(uvl_dir, exist_ok=True)
+    os.makedirs(cnf_dir, exist_ok=True)
+    os.makedirs(splot_dir, exist_ok=True)
+    os.makedirs(glencoe_dir, exist_ok=True)
+
+    try:
+        with ZipFile(zip_path, "w") as zipf:
+            for dataset in datasets:
+                file_path = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
+                for subdir, dirs, files in os.walk(file_path):
+                    for file in files:
+                        full_path = os.path.join(subdir, file)
+                        relative_path = os.path.relpath(full_path, file_path)
+
+                        _, ext = os.path.splitext(file)
+                        ext = ext.lower()
+
+                        if ext == ".uvl":
+                            uvl_file_path = os.path.join(uvl_dir, relative_path)
+                            os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
+                            shutil.copy(full_path, uvl_file_path)
+                            zipf.write(
+                                uvl_file_path,
+                                arcname=os.path.relpath(uvl_file_path, temp_dir),
+                            )
+
+                            try:
+                                file_id = int(file.split(".")[0][4:])
+                            except ValueError:
+                                logging.error(
+                                    f"No se puede extraer el ID del archivo: {file}"
+                                )
+                                continue
+
+                            try:
+                                cnf_dataset = to_cnf(file_id, cnf_dir)
+                                splot_dataset = to_splot(file_id, splot_dir)
+                                glencoe_dataset = to_glencoe(file_id, glencoe_dir)
+
+                                for transformed_file in [
+                                    cnf_dataset,
+                                    splot_dataset,
+                                    glencoe_dataset,
+                                ]:
+                                    if os.path.exists(transformed_file):
+                                        zipf.write(
+                                            transformed_file,
+                                            arcname=os.path.relpath(
+                                                transformed_file, temp_dir
+                                            ),
+                                        )
+                            except Exception as e:
+                                logging.error(
+                                    f"No se ha podido transformar el archivo {file}: {e}"
+                                )
+                                continue
+                        else:
+                            # Si no es UVL (por si existen otros archivos)
+                            # lo guardarmos en otra carpeta.
+                            # Aquí simplemente los copiamos a la carpeta correspondiente a su extensión.
+                            # Ejemplo:
+                            target_dir = None
+                            if ext == ".cnf":
+                                target_dir = cnf_dir
+                            elif ext == ".splot":
+                                target_dir = splot_dir
+                            elif ext == ".glencoe":
+                                target_dir = glencoe_dir
+                            else:
+                                target_dir = others_dir
+
+                            target_file_path = os.path.join(target_dir, relative_path)
+                            os.makedirs(
+                                os.path.dirname(target_file_path), exist_ok=True
+                            )
+                            shutil.copy(full_path, target_file_path)
+                            zipf.write(
+                                target_file_path,
+                                arcname=os.path.relpath(target_file_path, temp_dir),
+                            )
+
+        return send_file(
+            zip_path,
+            as_attachment=True,
+            mimetype="application/zip",
+            download_name="all_datasets.zip",
+        )
+    finally:
+        shutil.rmtree(temp_dir)
+
+
+def to_glencoe(file_id, glencoe_dir):
+    hubfile = HubfileService().get_by_id(file_id)
+    model = UVLReader(hubfile.get_path()).transform()
+    glencoe_file_name = f"{hubfile.name}_glencoe.txt"
+    glencoe_full_path = os.path.join(glencoe_dir, glencoe_file_name)
+    GlencoeWriter(glencoe_full_path, model).transform()
+    return glencoe_full_path
+
+
+def to_splot(file_id, splot_dir):
+    hubfile = HubfileService().get_by_id(file_id)
+    model = UVLReader(hubfile.get_path()).transform()
+    splot_file_name = f"{hubfile.name}_splot.txt"
+    splot_full_path = os.path.join(splot_dir, splot_file_name)
+    SPLOTWriter(splot_full_path, model).transform()
+    return splot_full_path
+
+
+def to_cnf(file_id, cnf_dir):
+    hubfile = HubfileService().get_by_id(file_id)
+    model = UVLReader(hubfile.get_path()).transform()
+    sat = FmToPysat(model).transform()
+    cnf_file_name = f"{hubfile.name}_cnf.txt"
+    cnf_full_path = os.path.join(cnf_dir, cnf_file_name)
+    DimacsWriter(cnf_full_path, sat).transform()
+    return cnf_full_path

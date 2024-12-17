@@ -1,132 +1,484 @@
+import io
+import shutil
+from zipfile import ZipFile
 import pytest
-from unittest import mock
-from app.modules.dataset.services import DataSetService
-from app.modules.dataset.models import DataSet
+import os
+import json
+from app import db
+from app.modules.auth.models import User
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.hubfile.models import Hubfile
+from app.modules.dataset.models import (
+    DSMetaData,
+    PublicationType,
+    DataSet,
+)
+from app.modules.dataset.routes import to_glencoe, to_splot, to_cnf
 
-# import tempfile
-# import os
-# from zipfile import ZipFile
+"""
+-------------------------
+HELPERS
+-------------------------
+
+"""
 
 
-@pytest.fixture
-def mock_dataset_service():
-    """Fixture para crear una instancia de DataSetService con mocks"""
-    service = DataSetService()
+@pytest.fixture(scope="module")
+def test_client(test_client):
 
-    service.repository = mock.Mock()
-    service.is_synchronized = mock.Mock()
-    return service
+    with test_client.application.app_context():
+        user_test = create_user(email="user_test@example.com", password="password123")
+        dataset_test = create_dataset(user_id=user_test.id)
+
+        os.makedirs(
+            f"uploads/user_{user_test.id}/dataset_{dataset_test.id}", exist_ok=True
+        )
+        with open(
+            f"uploads/user_{user_test.id}/dataset_{dataset_test.id}/file100.uvl",
+            "w",
+        ) as f:
+            f.write(
+                'features\n    Chat\n        mandatory\n            Connection\n                alternative\n                    "Peer 2 Peer"\n                    Server\n            Messages\n                or\n                    Text\n                    Video\n                    Audio\n        optional\n            "Data Storage"\n            "Media Player"\n\nconstraints\n    Server => "Data Storage"\n    Video | Audio => "Media Player"\n'  # noqa
+            )
+
+    yield test_client
+
+    with test_client.application.app_context():
+        db.session.delete(dataset_test)
+        db.session.delete(user_test)
+        db.session.commit()
+        shutil.rmtree(
+            f"uploads/user_{user_test.id}/dataset_{dataset_test.id}", ignore_errors=True
+        )
 
 
-@pytest.fixture
-def mock_dataset_with_files():
-    """Fixture para crear un dataset con files y feature models"""
-    dataset = DataSet(id=1, user_id=1)
-    feature_model = FeatureModel(id=1, data_set_id=1)
-    file1 = Hubfile(id=1, name="file1.uvl")
-    file2 = Hubfile(id=2, name="file2.uvl")
-    feature_model.files = [file1, file2]
-    dataset.feature_models = [feature_model]
+def create_user(email, password):
+    user = User(email=email, password=password)
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+def create_dataset(user_id):
+    ds_meta_data = DSMetaData(
+        title="Test Dataset",
+        description="Test dataset description",
+        publication_type=PublicationType.JOURNAL_ARTICLE,
+    )
+    db.session.add(ds_meta_data)
+    db.session.commit()
+
+    dataset = DataSet(user_id=user_id, ds_meta_data_id=ds_meta_data.id)
+    db.session.add(dataset)
+    db.session.commit()
     return dataset
 
 
-"""def test_zip_all_datasets():
-    obj = DataSetService()
-
-    with mock.patch.object(obj, 'is_synchronized', return_value=True), \
-         mock.patch.object(obj, 'convert_and_add_to_zip') as mock_convert_and_add:
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            uploads_dir = os.path.join(temp_dir, 'uploads')
-            os.makedirs(uploads_dir)
-
-            user_dir = os.path.join(uploads_dir, 'user_123')
-            os.makedirs(user_dir)
-
-            dataset_dir = os.path.join(user_dir, 'dataset_1')
-            os.makedirs(dataset_dir)
-
-            uvl_files = ['file1.uvl', 'file2.uvl', 'file3.uvl']
-            for file_name in uvl_files:
-                uvl_file = os.path.join(dataset_dir, file_name)
-                with open(uvl_file, 'w') as f:
-                    f.write("dummy data")
-
-            zip_path = obj.zip_all_datasets()
-
-            assert os.path.exists(zip_path)
-            with ZipFile(zip_path, 'r') as zipf:
-                for file_name in uvl_files:
-                    expected_path = f'dataset_1/{file_name}'
-                    zip_files = zipf.namelist()
-                    print(zip_files)
-                    assert expected_path in zip_files, f"Expected file path {expected_path} not found in {zip_files}"
-
-            assert mock_convert_and_add.call_count == len(uvl_files) * 4 + 4
-
-            for file_name in uvl_files:
-                for conversion_type in ['uvl', 'glencoe', 'splot', 'cnf']:
-                    mock_convert_and_add.assert_any_call(mock.ANY, 1, file_name, 'dataset_1')"""
+def create_feature_model(dataset_id):
+    feature_model = FeatureModel(data_set_id=dataset_id)
+    db.session.add(feature_model)
+    db.session.commit()
+    return feature_model
 
 
-def test_get_hubfile_by_uvl_filename(mock_dataset_service, mock_dataset_with_files):
-    """Prueba para get_hubfile_by_uvl_filename"""
-    mock_dataset_service.repository.get.return_value = mock_dataset_with_files
-
-    file = mock_dataset_service.get_hubfile_by_uvl_filename(1, "file1.uvl")
-    assert file.name == "file1.uvl"
-
-    with pytest.raises(FileNotFoundError):
-        mock_dataset_service.get_hubfile_by_uvl_filename(1, "non_existent_file.uvl")
-
-
-@mock.patch("app.modules.dataset.services.DataSetService.convert_to_glencoe")
-@mock.patch("app.modules.dataset.services.DataSetService.convert_to_splot")
-@mock.patch("app.modules.dataset.services.DataSetService.convert_to_cnf")
-def test_convert_and_add_to_zip(
-    mock_convert_cnf,
-    mock_convert_splot,
-    mock_convert_glencoe,
-    mock_dataset_service,
-    mock_dataset_with_files,
-):
-    """Prueba para convert_and_add_to_zip"""
-
-    mock_dataset_service.is_synchronized.return_value = True
-    mock_dataset_service.repository.get.return_value = mock_dataset_with_files
-
-    with mock.patch("zipfile.ZipFile") as mock_zip:
-        mock_zip.return_value.__enter__.return_value = mock.MagicMock()
-        mock_dataset_service.convert_and_add_to_zip(
-            mock_zip.return_value.__enter__.return_value, 1, "file1.uvl", "dataset_1"
+def create_hubfile(name, feature_model_id, user_id, dataset_id):
+    file_path = f"uploads/user_{user_id}/dataset_{dataset_id}/{name}"
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, "w") as f:
+        f.write(
+            "features\n"
+            "    Chat\n"
+            "        mandatory\n"
+            "            Connection\n"
+            "                alternative\n"
+            '                    "Peer 2 Peer"\n'
+            "                    Server\n"
+            "            Messages\n"
+            "                or\n"
+            "                    Text\n"
+            "                    Video\n"
+            "                    Audio\n"
+            "        optional\n"
+            '            "Data Storage"\n'
+            '            "Media Player"\n'
+            "\n"
+            "constraints\n"
+            '    Server => "Data Storage"\n'
+            '    Video | Audio => "Media Player"\n'
         )
 
-        mock_convert_glencoe.assert_called_once()
-        mock_convert_splot.assert_called_once()
-        mock_convert_cnf.assert_called_once()
+    hubfile = Hubfile(
+        name=name, checksum="123456", size=100, feature_model_id=feature_model_id
+    )
+    db.session.add(hubfile)
+    db.session.commit()
+    return hubfile
+
+
+def delete_folder(user, dataset):
+    if user.id != 2 or user.id != 1:
+        shutil.rmtree(f"uploads/user_{user.id}", ignore_errors=True)
+    else:
+        shutil.rmtree(
+            f"uploads/user_{user.id}/dataset_{dataset.id}", ignore_errors=True
+        )
+
+
+"""
+-------------------------
+FEATURE
+-------------------------
+
+"""
+
+
+def test_download_all_datasets(test_client):
+    user = create_user(email="test_user@example.com", password="password123")
+    dataset = create_dataset(user_id=user.id)
+    response = test_client.get("/dataset/download/all")
+
+    assert (
+        response.status_code == 200
+    ), "La solicitud para descargar todos los datasets falló."
+    assert (
+        response.headers["Content-Type"] == "application/zip"
+    ), "El tipo de contenido no es un archivo ZIP."
+    assert (
+        "all_datasets.zip" in response.headers["Content-Disposition"]
+    ), "El archivo ZIP no tiene el nombre esperado."
+
+    db.session.delete(dataset)
+    db.session.delete(user)
+    db.session.commit()
+    delete_folder(user, dataset)
+
+
+"""
+-------------------------
+PARSING
+-------------------------
+
+"""
 
 
 @pytest.mark.parametrize(
-    "conversion_type, method",
-    [
-        ("glencoe", "convert_to_glencoe"),
-        ("splot", "convert_to_splot"),
-        ("cnf", "convert_to_cnf"),
-    ],
+    "file_type, expected_extension",
+    [("uvl", "_glencoe.txt"), ("txt", "_splot.txt"), ("xml", "_cnf.txt")],
 )
-def test_convert_uvl_to_format(mock_dataset_service, conversion_type, method):
-    """Prueba para convertir el archivo UVL a diferentes formatos"""
+def test_file_conversion(test_client, file_type, expected_extension):
+    user = create_user(
+        email=f"test_user_{file_type}_parsing@example.com", password="password123"
+    )
+    dataset = create_dataset(user_id=user.id)
+    feature_model = create_feature_model(dataset.id)
 
-    mock_dataset_service.get_hubfile_by_uvl_filename = mock.Mock()
-    mock_dataset_service.get_hubfile_by_uvl_filename.return_value.get_path.return_value = (
-        "/mock/path/to/uvl"
+    hubfile = create_hubfile(
+        f"file100.{file_type}", feature_model.id, user.id, dataset.id
     )
 
-    with mock.patch.object(mock_dataset_service, method) as mock_conversion:
-        mock_dataset_service.convert_uvl_to_format(
-            1, "file1.uvl", conversion_type, "/mock/temp/file"
+    os.environ["WORKING_DIR"] = os.getcwd()
+    temp_dir = "temp_files"
+    os.makedirs(temp_dir, exist_ok=True)
+
+    try:
+        if file_type == "uvl":
+            result = to_glencoe(file_id=hubfile.id, glencoe_dir=temp_dir)
+        elif file_type == "txt":
+            result = to_splot(file_id=hubfile.id, splot_dir=temp_dir)
+        elif file_type == "xml":
+            result = to_cnf(file_id=hubfile.id, cnf_dir=temp_dir)
+
+        expected_path = os.path.join(temp_dir, f"{hubfile.name}{expected_extension}")
+
+        assert os.path.exists(result), "El archivo no fue creado correctamente."
+        assert (
+            result == expected_path
+        ), "La ruta del archivo transformado no es la esperada."
+
+    finally:
+        shutil.rmtree(temp_dir)
+
+    db.session.delete(hubfile)
+    db.session.delete(dataset)
+    db.session.delete(user)
+    db.session.commit()
+    delete_folder(user, dataset)
+
+
+def test_other_file_extension(test_client):
+    user = create_user(email="test_user_others@example.com", password="password123")
+    dataset = create_dataset(user_id=user.id)
+
+    os.makedirs(f"uploads/user_{user.id}/dataset_{dataset.id}", exist_ok=True)
+    with open(f"uploads/user_{user.id}/dataset_{dataset.id}/file100.txt", "w") as f:
+        f.write("Este es un archivo con una extensión diferente para prueba.")
+
+    response = test_client.get("/dataset/download/all")
+
+    assert (
+        response.status_code == 200
+    ), "La solicitud para descargar todos los datasets falló."
+
+    # Usar BytesIO para tratar la respuesta como un archivo
+    zip_data = io.BytesIO(response.data)
+
+    with ZipFile(zip_data) as zipf:
+        file_list = zipf.namelist()
+        assert any(
+            "otros/file100.txt" in file for file in file_list
+        ), "El archivo con extensión .txt no se encontró en la carpeta 'otros'."
+
+    db.session.delete(dataset)
+    db.session.delete(user)
+    db.session.commit()
+    delete_folder(user, dataset)
+
+
+def test_to_glencoe_parsing(test_client):
+    user = create_user(
+        email="test_user_glencoe_parsing@example.com", password="password123"
+    )
+    dataset = create_dataset(user_id=user.id)
+    feature_model = create_feature_model(dataset_id=dataset.id)
+
+    uvl_file_path = f"uploads/user_{user.id}/dataset_{dataset.id}/file100.uvl"
+    os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
+    with open(uvl_file_path, "w") as f:
+        f.write(
+            "features\n"
+            "    Chat\n"
+            "        mandatory\n"
+            "            Connection\n"
+            "                alternative\n"
+            '                    "Peer 2 Peer"\n'
+            "                    Server\n"
+            "            Messages\n"
+            "                or\n"
+            "                    Text\n"
+            "                    Video\n"
+            "                    Audio\n"
+            "        optional\n"
+            '            "Data Storage"\n'
+            '            "Media Player"\n\n'
+            "constraints\n"
+            '    Server => "Data Storage"\n'
+            '    Video | Audio => "Media Player"\n'
         )
 
-        mock_conversion.assert_called_once_with(1, "file1.uvl", "/mock/temp/file")
+    hubfile = create_hubfile(
+        name="file100.uvl",
+        feature_model_id=feature_model.id,
+        user_id=user.id,
+        dataset_id=dataset.id,
+    )
+
+    os.environ["WORKING_DIR"] = os.getcwd()
+    temp_dir = "temp_glencoe"
+    os.makedirs(temp_dir, exist_ok=True)
+
+    try:
+        result = to_glencoe(file_id=hubfile.id, glencoe_dir=temp_dir)
+        result
+
+        glencoe_file_path = os.path.join(temp_dir, f"{hubfile.name}_glencoe.txt")
+
+        with open(glencoe_file_path, "r") as f:
+            glencoe_content = f.read()
+
+        try:
+            glencoe_data = json.loads(glencoe_content)
+            glencoe_data
+        except json.JSONDecodeError:
+            assert False, "El contenido del archivo .glencoe no es un JSON válido."
+
+    finally:
+        shutil.rmtree(temp_dir)
+
+    db.session.delete(hubfile)
+    db.session.delete(dataset)
+    db.session.delete(user)
+    db.session.commit()
+    delete_folder(user, dataset)
+
+
+def test_to_splot_parsing(test_client):
+    user = create_user(
+        email="test_user_splot_parsing@example.com", password="password123"
+    )
+    dataset = create_dataset(user_id=user.id)
+    feature_model = create_feature_model(dataset_id=dataset.id)
+
+    uvl_file_path = f"uploads/user_{user.id}/dataset_{dataset.id}/file100.uvl"
+    os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
+    with open(uvl_file_path, "w") as f:
+        f.write(
+            "features\n"
+            "    Chat\n"
+            "        mandatory\n"
+            "            Connection\n"
+            "                alternative\n"
+            '                    "Peer 2 Peer"\n'
+            "                    Server\n"
+            "            Messages\n"
+            "                or\n"
+            "                    Text\n"
+            "                    Video\n"
+            "                    Audio\n"
+            "        optional\n"
+            '            "Data Storage"\n'
+            '            "Media Player"\n\n'
+            "constraints\n"
+            '    Server => "Data Storage"\n'
+            '    Video | Audio => "Media Player"\n'
+        )
+
+    hubfile = create_hubfile(
+        name="file100.uvl",
+        feature_model_id=feature_model.id,
+        user_id=user.id,
+        dataset_id=dataset.id,
+    )
+
+    os.environ["WORKING_DIR"] = os.getcwd()
+    temp_dir = "temp_splot"
+    os.makedirs(temp_dir, exist_ok=True)
+
+    try:
+        result = to_splot(file_id=hubfile.id, splot_dir=temp_dir)
+        result
+        splot_file_path = os.path.join(temp_dir, f"{hubfile.name}_splot.txt")
+        assert os.path.exists(splot_file_path), "El archivo .splot.txt no fue creado."
+
+        with open(splot_file_path, "r") as f:
+            splot_content = f.read()
+
+        expected_splot_content = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<feature_model name="Chat">
+<feature_tree>
+:r Chat (Chat)
+	:m Connection (Connection)
+		:g [1,1]
+			: "Peer 2 Peer" ("Peer 2 Peer")
+			: Server (Server)
+	:m Messages (Messages)
+		:g [1,3]
+			: Text (Text)
+			: Video (Video)
+			: Audio (Audio)
+	:o "Data Storage" ("Data Storage")
+	:o "Media Player" ("Media Player")
+</feature_tree>
+<constraints>
+	C1: ~Server or "Data Storage"
+	C2: ~Video or "Media Player"
+	C3: ~Audio or "Media Player"
+</constraints>
+</feature_model>"""
+
+        assert (
+            expected_splot_content.strip() == splot_content.strip()
+        ), "El contenido del archivo .splot.txt no es el esperado."
+
+    finally:
+        shutil.rmtree(temp_dir)
+
+    db.session.delete(hubfile)
+    db.session.delete(dataset)
+    db.session.delete(user)
+    db.session.commit()
+    delete_folder(user, dataset)
+
+
+def test_to_cnf_parsing(test_client):
+    user = create_user(
+        email="test_user_cnf_parsing@example.com", password="password123"
+    )
+    dataset = create_dataset(user_id=user.id)
+    feature_model = create_feature_model(dataset_id=dataset.id)
+
+    uvl_file_path = f"uploads/user_{user.id}/dataset_{dataset.id}/file100.uvl"
+    os.makedirs(os.path.dirname(uvl_file_path), exist_ok=True)
+    with open(uvl_file_path, "w") as f:
+        f.write(
+            "features\n"
+            "    Chat\n"
+            "        mandatory\n"
+            "            Connection\n"
+            "                alternative\n"
+            '                    "Peer 2 Peer"\n'
+            "                    Server\n"
+            "            Messages\n"
+            "                or\n"
+            "                    Text\n"
+            "                    Video\n"
+            "                    Audio\n"
+            "        optional\n"
+            '            "Data Storage"\n'
+            '            "Media Player"\n\n'
+            "constraints\n"
+            '    Server => "Data Storage"\n'
+            '    Video | Audio => "Media Player"\n'
+        )
+
+    hubfile = create_hubfile(
+        name="file100.uvl",
+        feature_model_id=feature_model.id,
+        user_id=user.id,
+        dataset_id=dataset.id,
+    )
+
+    os.environ["WORKING_DIR"] = os.getcwd()
+    temp_dir = "temp_cnf"
+    os.makedirs(temp_dir, exist_ok=True)
+
+    try:
+        result = to_cnf(file_id=hubfile.id, cnf_dir=temp_dir)
+        result
+        cnf_file_path = os.path.join(temp_dir, f"{hubfile.name}_cnf.txt")
+        assert os.path.exists(cnf_file_path), "El archivo .cnf no fue creado."
+
+        with open(cnf_file_path, "r") as f:
+            cnf_content = f.read()
+
+        expected_cnf_content = """p cnf 10 18
+c 1 Chat
+c 2 Connection
+c 3 "Peer 2 Peer"
+c 4 Server
+c 5 Messages
+c 6 Text
+c 7 Video
+c 8 Audio
+c 9 "Data Storage"
+c 10 "Media Player"
+1 0
+-1 2 0
+-2 1 0
+-2 3 4 0
+-3 -4 0
+-3 2 0
+-4 2 0
+-1 5 0
+-5 1 0
+-5 6 7 8 0
+-6 5 0
+-7 5 0
+-8 5 0
+-9 1 0
+-10 1 0
+-4 9 0
+-7 10 0
+-8 10 0"""
+
+        assert (
+            expected_cnf_content.strip() == cnf_content.strip()
+        ), "El contenido del archivo .cnf no es el esperado."
+
+    finally:
+        shutil.rmtree(temp_dir)
+
+    db.session.delete(hubfile)
+    db.session.delete(dataset)
+    db.session.delete(user)
+    db.session.commit()
+    delete_folder(user, dataset)

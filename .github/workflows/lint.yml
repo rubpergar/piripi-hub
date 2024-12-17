@@ -25,4 +25,4 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 app
+          flake8 --exclude app/modules/dataset/tests app

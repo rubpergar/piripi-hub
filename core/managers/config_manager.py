@@ -21,7 +21,7 @@ class ConfigManager:
 
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', secrets.token_bytes())
+    SECRET_KEY = os.getenv('SECRET_KEY', 'secret')
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
         f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
@@ -41,6 +41,7 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
+    SECRET_KEY = os.getenv('SECRET_KEY', 'secret')
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
         f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
