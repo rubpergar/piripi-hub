@@ -86,11 +86,16 @@ jobs:
           chromium-browser --version
           chromedriver --version
 
+      - name: Uninstall and Reinstall webdriver-manager
+        run: |
+          pip uninstall -y webdriver-manager
+          rm -rf ~/.wdm/
+          pip install webdriver-manager
+
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install selenium webdriver-manager
 
       - name: Start Flask Application in Background
         env:
