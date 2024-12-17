@@ -73,8 +73,8 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Set up Chromedriver
-        uses: googlechrome/setup-chrome-driver@v1
+      - name: Set up Chromium
+        uses: browser-actions/setup-chromium@v1
 
       - name: Install Python dependencies
         run: |
