@@ -91,6 +91,7 @@ jobs:
           pip uninstall -y webdriver-manager
           rm -rf ~/.wdm/
           pip install webdriver-manager
+          python -m webdriver_manager.chrome --update
 
       - name: Install Python dependencies
         run: |
