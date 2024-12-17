@@ -77,7 +77,7 @@ jobs:
         run: rm -rf ~/.wdm
 
       - name: Set up ChromeDriver
-        uses: nanasess/setup-chromedriver@latest
+        uses: nanasess/setup-chromedriver@42cc2998329f041de87dc3cfa33a930eacd57eaa
 
       - name: Install Python dependencies
         run: |
