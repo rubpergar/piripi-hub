@@ -73,16 +73,22 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Prepare environment
+        run: |
+          echo "webhook" > .moduleignore
+          sed -i '/rosemary @ file:\/\/\/app/d' requirements.txt
+
       - name: Clean up old drivers cache
         run: rm -rf ~/.wdm
-
-      - name: Set up ChromeDriver
-        uses: nanasess/setup-chromedriver@42cc2998329f041de87dc3cfa33a930eacd57eaa
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -e ./
+
+      - name: Set up ChromeDriver
+        uses: nanasess/setup-chromedriver@42cc2998329f041de87dc3cfa33a930eacd57eaa
 
       - name: Start Flask Application in Background
         env:
@@ -93,6 +99,8 @@ jobs:
           MARIADB_USER: uvlhub_user
           MARIADB_PASSWORD: uvlhub_password
         run: |
+          flask db upgrade
+          rosemary db:seed
           python -m flask run --host=0.0.0.0 --port=5000 --debug &
           sleep 5  # Esperar unos segundos para asegurarse de que el servidor esté activo
 
