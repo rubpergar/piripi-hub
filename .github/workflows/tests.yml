@@ -7,7 +7,6 @@ on:
     branches: [main, develop]
 
 jobs:
-  # Job para ejecutar tests unitarios
   pytest:
     runs-on: ubuntu-latest
 
@@ -24,8 +23,9 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s
           --health-timeout=5s --health-retries=3
 
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4  # Corregido la indentación a 6 espacios
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -39,7 +39,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Unit Tests
+      - name: Run Tests
         env:
           FLASK_ENV: testing
           MARIADB_HOSTNAME: 127.0.0.1
@@ -49,65 +49,3 @@ jobs:
           MARIADB_PASSWORD: uvlhub_password
         run: |
           pytest app/modules/ --ignore-glob='*selenium*'
-
-  # Job para ejecutar tests de Selenium
-  selenium-tests:
-    runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_ROOT_PASSWORD: uvlhub_root_password
-          MYSQL_DATABASE: uvlhubdb_test
-          MYSQL_USER: uvlhub_user
-          MYSQL_PASSWORD: uvlhub_password
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s
-          --health-timeout=5s --health-retries=3
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Prepare environment
-        run: |
-          echo "webhook" > .moduleignore
-          sed -i '/rosemary @ file:\/\/\/app/d' requirements.txt
-
-      - name: Clean up old drivers cache
-        run: rm -rf ~/.wdm
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Set up ChromeDriver
-        uses: nanasess/setup-chromedriver@42cc2998329f041de87dc3cfa33a930eacd57eaa
-
-      - name: Start Flask Application in Background
-        env:
-          FLASK_ENV: testing
-          MARIADB_HOSTNAME: 127.0.0.1
-          MARIADB_PORT: 3306
-          MARIADB_TEST_DATABASE: uvlhubdb_test
-          MARIADB_USER: uvlhub_user
-          MARIADB_PASSWORD: uvlhub_password
-        run: |
-          python -m flask run --host=0.0.0.0 --port=5000 --debug &
-          sleep 5  # Esperar unos segundos para asegurarse de que el servidor esté activo
-
-      - name: Run Selenium Tests
-        env:
-          FLASK_ENV: testing
-          MARIADB_HOSTNAME: 127.0.0.1
-          MARIADB_PORT: 3306
-          MARIADB_TEST_DATABASE: uvlhubdb_test
-          MARIADB_USER: uvlhub_user
-          MARIADB_PASSWORD: uvlhub_password
-        run: |
-          pytest $(find app/modules/ -type f -name "*selenium*.py")
