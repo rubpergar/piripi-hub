@@ -91,7 +91,7 @@ jobs:
           MARIADB_PASSWORD: uvlhub_password
         run: |
           nohup python -m flask run --host=0.0.0.0 --port=5000 --debug &
-          wait-on: 'http://0.0.0.0:5000'  # Esperar unos segundos para asegurarse de que el servidor esté activo
+          sleep 5  # Esperar unos segundos para asegurarse de que el servidor esté activo
 
       - name: Run Selenium Tests
         env:
