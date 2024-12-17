@@ -88,11 +88,9 @@ jobs:
 
       - name: Uninstall and Reinstall webdriver-manager
         run: |
-          pip uninstall -y webdriver-manager
           rm -rf ~/.wdm/
           pip install webdriver-manager
           python -m webdriver_manager.chrome --version 131.0.6778.108
-          chmod +x /home/runner/.wdm/drivers/chromedriver/linux64/131.0.6778.108/chromedriver-linux64/chromedriver
 
       - name: Install Python dependencies
         run: |
