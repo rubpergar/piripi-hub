@@ -73,24 +73,8 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Google Chrome
-        run: |
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get install -f -y
-          google-chrome --version
-
-      - name: Install Chromium and Chromium Driver
-        run: |
-          sudo apt update
-          sudo apt install -y chromium-browser chromium-driver
-          chromium-browser --version
-          chromedriver --version
-
-      - name: Uninstall and Reinstall webdriver-manager
-        run: |
-          rm -rf ~/.wdm/
-          pip install webdriver-manager
-          python -m webdriver_manager.chrome --version 131.0.6778.108
+      - name: Set up Chromedriver
+        uses: googlechrome/setup-chrome-driver@v1
 
       - name: Install Python dependencies
         run: |
@@ -106,8 +90,8 @@ jobs:
           MARIADB_USER: uvlhub_user
           MARIADB_PASSWORD: uvlhub_password
         run: |
-          nohup python -m flask run --host=0.0.0.0 --port=5000 &
-          sleep 5  # Esperar unos segundos para asegurarse de que el servidor esté activo
+          nohup python -m flask run --host=0.0.0.0 --port=5000 --debug &
+          wait-on: 'http://0.0.0.0:5000'  # Esperar unos segundos para asegurarse de que el servidor esté activo
 
       - name: Run Selenium Tests
         env:
