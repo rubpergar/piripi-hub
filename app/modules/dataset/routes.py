@@ -335,23 +335,28 @@ CREATE
 )
 @login_required
 def create_rate(dataset_id):
-    form = RateForm()
-    if form.validate_on_submit():
-        result = rateDataset_service.create(
-            rate=form.rate.data,
-            comment=form.comment.data,
-            user_id=current_user.id,
-            dataset_id=dataset_id,
-        )
-        return rateDataset_service.handle_service_response2(
-            result=result,
-            errors=form.errors,
-            success_url_redirect="dataset.rate",
-            success_msg="Rate successfully published!",
-            error_template="rate/create.html",
-            form=form,
-            id=dataset_id,
-        )
+    existrate=rateDataset_service.get_datset_byuser(dataset_id,current_user.id)
+    if existrate:
+       flash("You are not authorized to edit this rate", "error")
+        return redirect(url_for("dataset.rate", dataset_id=dataset_id))
+    else:
+        form = RateForm()
+        if form.validate_on_submit():
+            result = rateDataset_service.create(
+                rate=form.rate.data,
+                comment=form.comment.data,
+                user_id=current_user.id,
+                dataset_id=dataset_id,
+            )
+            return rateDataset_service.handle_service_response2(
+                result=result,
+                errors=form.errors,
+                success_url_redirect="dataset.rate",
+                success_msg="Rate successfully published!",
+                error_template="rate/create.html",
+                form=form,
+                id=dataset_id,
+            )
     return render_template("rate/create.html", form=form, dataset=dataset_id)
 
 

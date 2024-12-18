@@ -248,3 +248,6 @@ class RateDataSetService(BaseService):
 
     def get_all_comments(self, dataset_id):
         return self.repository.get_all_comments(dataset_id)
+    
+    def get_datset_byuser(self, dataset_id, user_id):
+        return self.repository.get_datset_byuser(dataset_id, user_id)

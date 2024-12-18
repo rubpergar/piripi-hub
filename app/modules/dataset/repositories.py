@@ -157,3 +157,8 @@ class RateRepository(BaseRepository):
 
     def get_all_comments(self, dataset_id):
         return RateDatasets.query.filter_by(dataset_id=dataset_id).all()
+
+    def get_datset_byuser(self, dataset_id, user_id):
+        return RateDatasets.query.filter(
+            dataset_id==dataset_id,
+            user_id==user_id).firts()
